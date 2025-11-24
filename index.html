@@ -1,0 +1,1625 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>E-Modul Islamisasi di Sumatra</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Lora:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+    
+    <!-- Memuat React dan ReactDOM dari CDN -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <!-- Memuat Babel Standalone untuk kompilasi JSX di browser -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+    
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              emerald: {
+                50: '#ecfdf5',
+                100: '#d1fae5',
+                200: '#a7f3d0',
+                300: '#6ee7b7',
+                400: '#34d399',
+                500: '#10b981',
+                600: '#059669',
+                700: '#047857',
+                800: '#065f46',
+                900: '#064e3b',
+                950: '#022c22',
+              },
+            },
+            fontFamily: {
+              sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+              serif: ['Lora', 'serif'],
+            },
+            animation: {
+              'float': 'float 8s ease-in-out infinite',
+              'popIn': 'popIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards',
+              'slideUp': 'slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+            },
+            keyframes: {
+              float: {
+                '0%, 100%': { transform: 'translateY(0)' },
+                '50%': { transform: 'translateY(-15px)' },
+              },
+              slideUp: {
+                '0%': { transform: 'translateY(20px)', opacity: '0' },
+                '100%': { transform: 'translateY(0)', opacity: '1' },
+              },
+              popIn: {
+                '0%': { opacity: '0', transform: 'scale(0.95)' },
+                '100%': { opacity: '1', transform: 'scale(1)' }
+              }
+            }
+          }
+        }
+      }
+    </script>
+    
+    <style>
+      body {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        background-color: #022c22; /* Emerald 950 base */
+        scrollbar-width: thin;
+        scrollbar-color: #059669 #022c22;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+      .dark body {
+        background-color: #020617;
+      }
+      body::-webkit-scrollbar {
+        width: 6px;
+      }
+      body::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      body::-webkit-scrollbar-thumb {
+        background-color: #34d399;
+        border-radius: 20px;
+      }
+      
+      /* Premium Glass Effect */
+      .glass-panel {
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.6);
+        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+      }
+      .dark .glass-panel {
+        background: rgba(15, 23, 42, 0.7);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+      }
+
+      .animate-on-scroll {
+        opacity: 0;
+        transform: translateY(20px);
+        transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1), transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+      }
+      .animate-on-scroll.is-visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      
+      .stagger-in > * {
+        opacity: 0;
+        transform: translateY(15px);
+        transition: opacity 0.5s ease, transform 0.5s ease;
+      }
+      .stagger-in.is-visible > * {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      /* Refined Card */
+      .chapter-card {
+        transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      }
+      .chapter-card:hover {
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      }
+
+      .tooltip-caret::after {
+        content: '';
+        position: absolute;
+        top: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        border-width: 6px;
+        border-style: solid;
+        border-color: white transparent transparent transparent;
+      }
+      .dark .tooltip-caret::after {
+         border-color: #1e293b transparent transparent transparent;
+      }
+      
+      .loader {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        display: inline-block;
+        border-top: 3px solid #FFF;
+        border-right: 3px solid transparent;
+        box-sizing: border-box;
+        animation: rotation 1s linear infinite;
+      }
+      
+      @keyframes rotation {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+
+      /* Helper for initial load */
+      #root:empty {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+      }
+      #root:empty::after {
+        content: "Memuat Modul Sejarah...";
+        font-family: sans-serif;
+        color: #34d399;
+        font-weight: 500;
+        animation: pulse 1.5s infinite;
+      }
+      
+      /* Book-like reading experience - Word Style (Size 8 equivalent ~ 11px) */
+      .prose-book p {
+        text-align: justify;
+        text-justify: inter-word;
+        font-family: 'Lora', serif;
+        font-size: 11px; /* Ukuran setara 8pt di Word */
+        line-height: 1.6;
+        color: #334155;
+        margin-bottom: 0.8rem; /* Spasi antar paragraf yang rapi */
+      }
+      .dark .prose-book p {
+        color: #cbd5e1;
+      }
+      
+      @keyframes pulse {
+        0%, 100% { opacity: 0.6; }
+        50% { opacity: 1; }
+      }
+    </style>
+<link rel="stylesheet" href="/index.css">
+</head>
+<body class="text-slate-600 dark:text-slate-300 antialiased bg-emerald-950 dark:bg-slate-950 selection:bg-emerald-200 selection:text-emerald-900">
+    <div id="root"></div>
+    <script type="text/babel">
+// --- Inisialisasi Firebase ---
+const firebaseConfig = {
+  apiKey: "AIzaSyBAJDHYr33ukklYsp3B5o549VtB4ywk0iU",
+  authDomain: "e-modul-sejarah.firebaseapp.com",
+  projectId: "e-modul-sejarah",
+  storageBucket: "e-modul-sejarah.firebasestorage.app",
+  messagingSenderId: "752477782254",
+  appId: "1:752477782254:web:2bf468df5595695da3f3ff",
+  measurementId: "G-GDLKZLQK53"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+const { useState, useEffect, useCallback, createContext, useContext, useRef, useMemo } = React;
+
+// --- DATA & KONSTANTA ---
+const XP_PER_LEVEL = 10;
+const LEVELS = ['Musafir', 'Santri', 'Ulama', 'Wali', 'Sultan', 'Sejarawan Agung', 'Pakar Nusantara', 'Guru Besar', 'Mahaguru Sejarah', 'Legenda Akademis'];
+const XP_BENAR = 4;
+const XP_MINIMUM_PER_BAB = 2;
+
+// Data Kuis & Konten
+const QUIZ_BAB_1_NEW = {
+  id: 'quiz-bab-1',
+  title: "Uji Pengetahuan: Samudra Pasai",
+  questions: [
+    { question: "Menurut banyak sejarawan modern, teori manakah yang dianggap paling kuat dalam menjelaskan asal-usul kedatangan Islam ke Pasai?", options: ["Teori Gujarat, karena kesamaan nisan", "Teori Persia, karena perayaan 10 Muharram", "Teori Arab/Mekkah, karena penggunaan gelar 'al-Malik' dan Mazhab Syafi'i", "Teori Cina, melalui ekspedisi Laksamana Cheng Ho"], correctAnswer: 2, xp: XP_BENAR },
+    { question: "Siapakah nama pendiri Kesultanan Samudra Pasai yang setelah memeluk Islam dikenal dengan gelar Sultan Malik as-Saleh?", options: ["Sultan Iskandar Muda", "Meurah Silu", "Sultan Ali Mughayat Syah", "Sultan Zainal Abidin"], correctAnswer: 1, xp: XP_BENAR },
+    { question: "Apa kesaksian penting yang dicatat oleh Ibnu Batutah saat mengunjungi Samudra Pasai pada tahun 1345?", options: ["Sultan adalah pemimpin yang gemar berperang", "Istana sultan adalah pusat perdagangan budak", "Sultan adalah pemimpin yang saleh dan gemar berdiskusi dengan para ulama", "Kerajaan dalam kondisi miskin dan terbelakang"], correctAnswer: 2, xp: XP_BENAR },
+    { question: "Mazhab fikih (hukum Islam) apakah yang dominan dan menjadi dasar keagamaan di Kesultanan Samudra Pasai?", options: ["Mazhab Hanafi", "Mazhab Maliki", "Mazhab Hambali", "Mazhab Syafi'i"], correctAnswer: 3, xp: XP_BENAR },
+    { question: "Selain sebagai pusat studi Islam, peran ekonomi utama Samudra Pasai adalah menjadi...", options: ["Pusat pertanian terbesar di Sumatra", "'Emporium' internasional pertama yang bercorak Islam di Selat Malaka", "Pangkalan militer utama untuk melawan Majapahit", "Kerajaan agraris yang terisolasi"], correctAnswer: 1, xp: XP_BENAR },
+  ]
+};
+
+const QUIZ_BAB_2_NEW = {
+  id: 'quiz-bab-2',
+  title: "Uji Pengetahuan: Kesultanan Aceh",
+  questions: [
+    { question: "Peristiwa geopolitik besar apakah yang menjadi pemicu utama kebangkitan Kesultanan Aceh pada awal abad ke-16?", options: ["Runtuhnya Sriwijaya", "Serangan dari Dinasti Chola", "Jatuhnya Malaka ke tangan Portugis pada 1511", "Perang Padri di Minangkabau"], correctAnswer: 2, xp: XP_BENAR },
+    { question: "Siapakah sultan yang berhasil membawa Kesultanan Aceh Darussalam ke puncak kejayaannya sebagai imperium maritim?", options: ["Sultan Ali Mughayat Syah", "Sultan Alaudin Riayat Syah", "Sultan Iskandar Muda", "Nuruddin ar-Raniri"], correctAnswer: 2, xp: XP_BENAR },
+    { question: "Apa nama kitab undang-undang komprehensif yang mengatur tata pemerintahan dan hukum di Kesultanan Aceh?", options: ["Bustanus Salatin", "Hikayat Raja-Raja Pasai", "Adat Meukuta Alam atau Kanun Meukuta Alam", "Sastra Jawi"], correctAnswer: 2, xp: XP_BENAR },
+    { question: "Apa tujuan utama Kesultanan Aceh mengirimkan utusan diplomatik ke Kesultanan Utsmaniyah di Istanbul?", options: ["Meminta bantuan militer melawan Portugis dan mencari legitimasi", "Mempelajari sistem pertanian Utsmaniyah", "Menjalin kerjasama dalam bidang seni dan sastra", "Menawarkan upeti sebagai negara bawahan"], correctAnswer: 0, xp: XP_BENAR },
+    { question: "Komoditas apakah yang menjadi tulang punggung perekonomian Kesultanan Aceh dan memasok sebagian besar kebutuhan dunia pada masanya?", options: ["Emas", "Kopi", "Cengkeh", "Lada"], correctAnswer: 3, xp: XP_BENAR },
+  ]
+};
+
+const QUIZ_BAB_3_NEW = {
+  id: 'quiz-bab-3',
+  title: "Uji Pengetahuan: Transisi Sriwijaya ke Islam",
+  questions: [
+    { question: "Serangan dari kerajaan mana pada tahun 1025 yang menjadi pukulan telak dan awal dari kemunduran Sriwijaya?", options: ["Kerajaan Majapahit", "Dinasti Chola dari India Selatan", "Kesultanan Malaka", "Kerajaan Singasari"], correctAnswer: 1, xp: XP_BENAR },
+    { question: "Bagaimana karakteristik utama proses transisi dari hegemoni Sriwijaya ke era kesultanan-kesultanan Islam?", options: ["Melalui penaklukan militer besar-besaran", "Sebagai proses yang damai dan didorong oleh dinamika perdagangan", "Diintervensi oleh kekuatan dari Eropa", "Terjadi secara tiba-tiba dalam satu dekade"], correctAnswer: 1, xp: XP_BENAR },
+    { question: "Sriwijaya dikenal sebagai kemaharajaan maritim yang kuat, atau disebut juga sebagai...", options: ["Emporium", "Kesultanan", "Talasokrasi", "Negara Agraris"], correctAnswer: 2, xp: XP_BENAR },
+    { question: "Mengapa para pedagang Muslim internasional mulai beralih ke pelabuhan-pelabuhan alternatif di pesisir utara Sumatra?", options: ["Karena pelabuhan Sriwijaya lebih modern", "Karena diwajibkan oleh Sriwijaya", "Karena kontrol Sriwijaya melemah sehingga pelabuhannya tidak lagi aman", "Karena dilarang berdagang oleh para datu"], correctAnswer: 2, xp: XP_BENAR },
+    { question: "Apa keuntungan utama bagi para penguasa lokal (datu) di pesisir dengan memeluk agama Islam?", options: ["Mendapatkan senjata dari Sriwijaya", "Dihapuskannya sistem pajak", "Memperkuat aliansi komersial dan politik dengan jaringan Muslim global", "Diwajibkan untuk berperang melawan Jawa"], correctAnswer: 2, xp: XP_BENAR },
+  ]
+};
+
+const QUIZ_BAB_4_NEW = {
+  id: 'quiz-bab-4',
+  title: "Uji Pengetahuan: Islam di Minangkabau",
+  questions: [
+    { question: "Falsafah agung apakah yang menjadi hasil sintesis antara adat dan agama di Minangkabau setelah melalui proses dialektika yang panjang?", options: ["Syarak basandi adat", "Tungku Tigo Sajarangan", "Adat basandi syarak, syarak basandi Kitabullah", "Sistem Matrilineal"], correctAnswer: 2, xp: XP_BENAR },
+    { question: "Siapakah tokoh ulama sufi dari Tarekat Syattariyah yang dianggap sebagai penyebar utama Islam di dataran tinggi Minangkabau?", options: ["Sultan Iskandar Muda", "Nuruddin ar-Raniri", "Syeikh Burhanuddin Ulakan", "Sultan Malik as-Saleh"], correctAnswer: 2, xp: XP_BENAR },
+    { question: "Perang Padri pada awal abad ke-19 pada dasarnya adalah konflik antara...", options: ["Kaum adat melawan penjajah Belanda", "Kaum ulama melawan Kesultanan Aceh", "Kaum ulama puritan (Padri) melawan kaum penjaga tradisi (Adat)", "Minangkabau melawan kerajaan tetangga"], correctAnswer: 2, xp: XP_BENAR },
+    { question: "Sistem sosial unik apakah di Minangkabau yang tetap dipertahankan dan diakomodasi setelah proses Islamisasi?", options: ["Sistem Patrilineal", "Sistem Kasta", "Sistem Matrilineal", "Sistem Monarki Absolut"], correctAnswer: 2, xp: XP_BENAR },
+    { question: "Pendekatan ajaran Islam apakah yang terbukti sangat efektif dan mudah diterima oleh masyarakat Minangkabau pada awalnya?", options: ["Ajaran yang bersifat kaku dan keras", "Ajaran tasawuf (sufisme) yang akomodatif", "Ajaran yang menolak semua bentuk adat", "Ajaran yang dibawa oleh militer"], correctAnswer: 1, xp: XP_BENAR },
+  ]
+};
+
+const QUIZ_BAB_5_NEW = {
+  id: 'quiz-bab-5',
+  title: "Uji Pengetahuan: Multikulturalisme Islam",
+  questions: [
+    { question: "Proses pertemuan budaya Islam dengan budaya lokal di Nusantara lebih tepat digambarkan sebagai...", options: ["Asimilasi, di mana budaya lokal hilang", "Isolasi, di mana kedua budaya tidak berinteraksi", "Akulturasi, di mana kedua budaya saling meminjam unsur dan menciptakan hal baru", "Konflik, di mana terjadi perang budaya terus-menerus"], correctAnswer: 2, xp: XP_BENAR },
+    { question: "Apa ciri khas arsitektur pada banyak masjid kuno di Sumatra yang menunjukkan adanya akulturasi?", options: ["Penggunaan kubah besar dari emas", "Penggunaan atap tumpang (bertingkat) yang merupakan adaptasi arsitektur lokal", "Bangunan yang seluruhnya terbuat dari marmer", "Menara yang sangat tinggi menyerupai menara Eiffel"], correctAnswer: 1, xp: XP_BENAR },
+    { question: "Aksara Jawi yang lahir dari proses akulturasi adalah...", options: ["Huruf Latin yang digunakan untuk menulis bahasa Arab", "Huruf Arab yang dimodifikasi untuk menuliskan bahasa Melayu", "Huruf Pallawa dari India yang digabungkan dengan huruf Arab", "Sistem penulisan baru yang tidak berhubungan dengan aksara lain"], correctAnswer: 1, xp: XP_BENAR },
+    { question: "Bagaimana seni ukir lokal beradaptasi dengan ajaran Islam yang melarang penggambaran makhluk hidup?", options: ["Seni ukir sepenuhnya dilarang dan dihilangkan", "Para seniman beralih mengukir motif flora (tumbuh-tumbuhan) dan kaligrafi", "Para seniman tetap mengukir gambar manusia secara diam-diam", "Seni ukir digantikan oleh seni lukis dari Eropa"], correctAnswer: 1, xp: XP_BENAR },
+    { question: "Upacara Tabuik di Pariaman adalah contoh akulturasi yang berakar dari tradisi Islam Syiah namun telah menjadi...", options: ["Upacara kenegaraan yang wajib", "Festival budaya lokal yang meriah", "Ritual yang dilarang oleh pemerintah", "Tradisi yang sudah punah"], correctAnswer: 1, xp: XP_BENAR },
+  ]
+};
+
+const TIMELINE_BAB_3 = [
+    { year: 'Abad ke-7', title: 'Awal Kejayaan Sriwijaya', description: 'Sriwijaya muncul sebagai kekuatan maritim dominan di Asia Tenggara, menguasai jalur perdagangan penting.', longDescription: 'Pada periode ini, Sriwijaya, dengan pusatnya di sekitar Palembang, berhasil menguasai Selat Malaka dan Selat Sunda. Kekuasaannya didasarkan pada kekuatan armada laut yang besar dan jaringan perdagangan yang luas, menjadikannya pusat penting bagi ajaran Buddha Mahayana.' },
+    { year: '1025', title: 'Serangan Rajendra Chola', description: 'Kerajaan Chola dari India Selatan menyerang pusat-pusat kekuatan Sriwijaya.', longDescription: 'Serangan ini merupakan pukulan telak bagi Sriwijaya. Meskipun tidak menghancurkan kerajaan secara total, serangan ini melemahkan kontrol maritim Sriwijaya secara signifikan dan membuka jalan bagi kekuatan-kekuatan regional lain untuk bangkit.' },
+    { year: 'Abad ke-11', title: 'Munculnya Pelabuhan Alternatif', description: 'Pelabuhan-pelabuhan di pesisir utara Sumatra mulai berkembang, mengurangi ketergantungan pada Sriwijaya.', longDescription: 'Seiring melemahnya Sriwijaya, para pedagang, terutama dari Arab dan Persia, mulai mencari pelabuhan alternatif yang lebih aman dan menguntungkan. Inilah cikal bakal munculnya kota-kota pelabuhan yang kemudian menjadi pusat penyebaran Islam.' },
+    { year: 'Abad ke-13', title: 'Islamisasi Dimulai', description: 'Komunitas Muslim pertama mulai terbentuk di kota-kota pelabuhan seperti Perlak dan Samudra Pasai.', longDescription: 'Kontak intensif dengan para pedagang Muslim menyebabkan banyak penguasa lokal dan penduduk di pesisir memeluk Islam. Proses ini terjadi secara damai melalui perdagangan dan perkawinan, bukan penaklukan.' },
+    { year: '1292', title: 'Laporan Marco Polo', description: 'Marco Polo mencatat keberadaan kerajaan Islam (Perlak) di Sumatra dalam perjalanan pulangnya.', longDescription: 'Catatan Marco Polo menjadi salah satu bukti tertulis dari Barat yang mengkonfirmasi eksistensi kerajaan Islam di Nusantara pada akhir abad ke-13, menandai pergeseran kekuatan politik dan agama di wilayah tersebut.' },
+];
+
+const INTERACTIVE_STRUCTURE_BAB_4 = {
+    title: 'Harmoni Adat dan Islam di Minangkabau',
+    items: [
+        { id: '1', title: 'Adat Basandi Syarak', icon: '⚖️', description: 'Prinsip "Adat bersendi pada syariat" ini menjadi dasar filosofi hidup. Adat Minang yang sudah ada sebelumnya diselaraskan dengan ajaran Islam, di mana aturan adat tidak boleh bertentangan dengan Al-Qur\'an dan Hadis.', imgSrc: 'adat-syarak.jpg' },
+        { id: '2', title: 'Syarak Basandi Kitabullah', icon: '📖', description: 'Prinsip kelanjutannya, "Syariat bersendi pada Kitabullah (Al-Qur\'an)". Ini memperkuat bahwa hukum Islam adalah sumber utama, yang kemudian menjadi rujukan bagi pelaksanaan adat. Keduanya saling melengkapi, bukan bertentangan.', imgSrc: 'kitabullah.jpg' },
+        { id: '3', title: 'Sistem Matrilineal', icon: '👩‍👧‍👦', description: 'Islam tidak menghapus sistem matrilineal (garis keturunan dari pihak ibu) yang unik di Minangkabau. Harta pusaka tinggi tetap diwariskan melalui garis perempuan, sementara hukum waris Islam (faraidh) diterapkan pada harta pencaharian pribadi.', imgSrc: 'matrilineal.jpg' },
+        { id: '4', title: 'Peran Tungku Tigo Sajarangan', icon: '🏛️', description: 'Kepemimpinan komunal dipegang oleh tiga pilar: Ninik Mamak (pemimpin adat), Alim Ulama (pemimpin agama), dan Cerdik Pandai (kaum intelektual). Mereka bekerja sama dalam harmoni untuk mengatur kehidupan masyarakat.', imgSrc: 'tigo-sajarangan.jpg' },
+        { id: '5', title: 'Rumah Gadang dan Surau', icon: '🕌', description: 'Rumah Gadang tetap menjadi pusat kehidupan keluarga besar secara adat, sementara Surau (masjid/mushala) menjadi pusat kegiatan keagamaan, pendidikan Islam, dan sosial bagi kaum laki-laki, menunjukkan adanya pembagian ruang peran yang jelas.', imgSrc: 'surau.jpg' }
+    ]
+};
+
+const LEGACY_EXPLORER_BAB_5 = {
+    title: 'Jejak Akulturasi Islam di Sumatra',
+    items: [
+        { id: '1', name: 'Arsitektur Masjid', description: 'Banyak masjid kuno di Sumatra tidak memiliki kubah khas Timur Tengah. Sebaliknya, mereka mengadopsi atap tumpang (bertingkat) yang merupakan adaptasi dari arsitektur candi Hindu-Buddha atau rumah adat lokal, seperti pada Masjid Agung Demak di Jawa atau masjid-masjid kuno di Minangkabau.', imgSrc: 'arsitektur-masjid.jpg' },
+        { id: '2', name: 'Sastra dan Aksara', description: 'Munculnya aksara Jawi (Arab-Melayu), yaitu huruf Arab yang dimodifikasi untuk menuliskan bahasa Melayu. Ini melahirkan karya-karya sastra besar seperti Hikayat Raja-Raja Pasai, yang memadukan narasi sejarah lokal dengan nilai-nilai Islam.', imgSrc: 'sastra-jawi.jpg' },
+        { id: '3', name: 'Upacara Adat', description: 'Banyak upacara adat lokal yang dipertahankan namun diisi dengan nilai-nilai Islam. Contohnya adalah upacara Tabuik di Pariaman, yang berakar dari tradisi Syiah untuk memperingati Asyura, namun telah berakulturasi menjadi festival budaya lokal yang meriah.', imgSrc: 'upacara-tabuik.jpg' },
+        { id: '4', name: 'Seni Kaligrafi', description: 'Seni kaligrafi Islam tidak hanya ditemukan di dalam masjid, tetapi juga diadaptasi ke media lain seperti ukiran kayu pada rumah adat, kain tenun, dan bahkan pada senjata tradisional, menunjukkan Islam telah meresap ke dalam sendi-sendi estetika lokal.', imgSrc: 'seni-kaligrafi.jpg' }
+    ]
+};
+
+const TOKOH_PENTING_BAB_1 = {
+    title: 'Tokoh Kunci Samudra Pasai',
+    items: [
+        { id: '1', title: 'Sultan Malik as-Saleh (Meurah Silu)', icon: '👑', description: 'Pendiri dan sultan pertama Samudra Pasai. Ia adalah penguasa lokal yang memeluk Islam setelah bertemu dengan Syekh Ismail dari Mekkah. Nisan-nya di Gampong Beuringin menjadi bukti arkeologis tertua kerajaan Islam di Nusantara.', imgSrc: 'tokoh-malik-saleh.jpg' },
+        { id: '2', title: 'Ibnu Batutah', icon: '🗺️', description: 'Pelancong Muslim terkenal dari Maroko yang mengunjungi Pasai pada tahun 1345. Dalam catatannya, Rihlah ila al-Masyriq, ia menggambarkan Pasai sebagai kota yang makmur, sultannya (Sultan Malik az-Zahir II) sangat saleh, dan menjadi pusat intelektual Mazhab Syafi\'i.', imgSrc: 'tokoh-ibnu-batutah.jpg' }
+    ]
+};
+
+const TOKOH_PENTING_BAB_2 = {
+    title: 'Tokoh Kunci Kesultanan Aceh',
+    items: [
+        { id: '1t', title: 'Sultan Iskandar Muda', icon: '⚔️', description: 'Sultan Aceh terbesar yang membawa kesultanan ke puncak kejayaan (1607-1636). Ia menaklukkan banyak wilayah, mengontrol Selat Malaka, membangun armada laut yang kuat, dan menjadikan Aceh sebagai pusat perdagangan lada internasional.', imgSrc: 'aceh-iskandar-muda.jpg' },
+        { id: '2t', title: 'Nuruddin ar-Raniri', icon: '✍️', description: 'Seorang ulama besar asal Gujarat yang menjadi Syaikhul Islam (penasihat agama tertinggi) di Aceh. Ia adalah penulis produktif yang karyanya, seperti Bustanus Salatin, menjadi rujukan penting dalam sastra dan pemikiran Islam Melayu.', imgSrc: 'tokoh-nuruddin.jpg' }
+    ]
+};
+
+const TOKOH_PENTING_BAB_4 = {
+    title: 'Tokoh Kunci Islam Minangkabau',
+    items: [
+        { id: '1m', title: 'Syeikh Burhanuddin Ulakan', icon: '🕌', description: 'Ulama sufi terkemuka yang dianggap sebagai penyebar utama Islam di dataran tinggi Minangkabau. Ia belajar di Aceh dan kembali untuk mendirikan surau di Ulakan, Pariaman, yang menjadi pusat kaderisasi ulama Tarekat Syattariyah.', imgSrc: 'tokoh-burhanuddin.jpg' }
+    ]
+};
+
+const FAKTA_MENARIK_BAB_3 = {
+    title: 'Fakta Menarik Transisi Sriwijaya',
+    items: [
+        { id: '1t', name: 'Perlak: Kerajaan Islam TERTUA?', description: 'Beberapa catatan sejarah (seperti Hikayat Raja-Raja Pasai) menyebut Kerajaan Perlak berdiri lebih dulu dari Samudra Pasai, sekitar tahun 840 M. Meskipun bukti arkeologisnya tidak sekuat Pasai, Perlak berperan sebagai pelabuhan transit penting bagi pedagang Muslim sebelum Pasai bangkit.', imgSrc: 'fakta-perlak.jpg' },
+        { id: '2t', name: 'Gelar "Datuk" Tetap Bertahan', description: 'Saat Islam masuk, gelar-gelar kepemimpinan lokal seperti "Datuk" (pemimpin klan/wilayah) tidak dihapus. Sebaliknya, para Datuk inilah yang seringkali pertama memeluk Islam untuk memperkuat posisi dagang mereka. Islam beradaptasi dengan struktur sosial yang ada.', imgSrc: 'fakta-datuk.jpg' }
+    ]
+};
+
+const FAKTA_MENARIK_BAB_5 = {
+    title: 'Jejak Akulturasi Lainnya',
+    items: [
+        { id: '1f', name: 'Adaptasi Nama Hari', description: 'Nama-nama hari dalam bahasa Indonesia (seperti Senin, Selasa, Rabu, Kamis, Jumat) adalah serapan langsung dari bahasa Arab, menunjukkan betapa dalamnya pengaruh Islam dalam kehidupan sehari-hari, menggantikan sistem penanggalan Hindu sebelumnya.', imgSrc: 'fakta-kalender.jpg' },
+        { id: '2f', name: 'Seni Ukir di Rumah Adat', description: 'Masuknya Islam tidak mengharamkan seni ukir. Sebaliknya, motif ukiran di rumah adat (seperti Rumah Gadang atau ukiran Melayu) bergeser. Motif makhluk hidup diubah menjadi motif flora (tumbuh-tumbuhan) atau kaligrafi, menyesuaikan dengan ajaran Islam.', imgSrc: 'fakta-ukiran-kayu.jpg' }
+    ]
+};
+
+const PETA_KONSEP_BAB_0 = [
+    { year: 'Langkah 1', title: 'Teori Kedatangan Islam', description: 'Menganalisis berbagai teori (Gujarat, Arab, Persia) dan bukti awal.', longDescription: 'Pada tahap ini, kita akan membedah perdebatan akademis tentang bagaimana Islam pertama kali menyentuh Nusantara. Apakah melalui pedagang Gujarat, utusan langsung dari Arab, atau pengaruh budaya Persia? Kita akan melihat bukti-bukti yang mendukung setiap teori.' },
+    { year: 'Langkah 2', title: 'Kerajaan Pertama: Samudra Pasai', description: 'Mempelajari Pasai sebagai kerajaan Islam pertama dan pusat intelektual.', longDescription: 'Setelah Islam hadir, ia membentuk entitas politik. Samudra Pasai adalah buktinya. Kita akan mempelajari perannya sebagai "Pintu Gerbang" Islam di Asia Tenggara, pusat perdagangan lada, dan tempat di mana Ibnu Batutah singgah dan mencatat kemajuan peradabannya.' },
+    { year: 'Langkah 3', title: 'Puncak Kuasa: Kesultanan Aceh', description: 'Menyelami masa kejayaan Aceh Darussalam sebagai raksasa maritim.', longDescription: 'Setelah Pasai meredup, Aceh bangkit sebagai "superpower" regional. Kita akan membahas era Sultan Iskandar Muda, persaingannya dengan Portugis, dan sistem hukumnya yang canggih (Kanun Meukuta Alam), serta diplomasinya dengan Turki Utsmaniyah.' },
+    { year: 'Langkah 4', title: 'Transisi Kekuatan (dari Sriwijaya)', description: 'Memahami proses runtuhnya Sriwijaya dan transisi damai ke era Islam.', longDescription: 'Islam tidak hadir di ruang hampa. Ia mengisi kekosongan yang ditinggalkan oleh kemaharajaan Buddha, Sriwijaya. Kita akan menganalisis faktor-faktor keruntuhan Sriwijaya dan bagaimana pelabuhan-pelabuhan Islam baru secara damai mengambil alih jalur perdagangan.' },
+    { year: 'Langkah 5', title: 'Akulturasi & Sintesis (Studi Kasus)', description: 'Fokus pada sintesis unik Islam dan adat matrilineal di Minangkabau.', longDescription: 'Bagaimana Islam berdialog dengan budaya yang sudah kuat? Studi kasus Minangkabau adalah jawabannya. Kita akan mempelajari dialektika (termasuk Perang Padri) yang melahirkan falsafah "Adat basandi syarak, syarak basandi Kitabullah".' },
+    { year: 'Langkah 6', title: 'Warisan Multikultural', description: 'Mengidentifikasi jejak akulturasi dalam arsitektur, sastra, dan upacara adat.', longDescription: 'Terakhir, kita akan melihat warisan abadi dari proses ini. Dari arsitektur masjid atap tumpang, aksara Jawi (Arab-Melayu), hingga upacara-upacara unik. Ini adalah bukti bahwa Islam di Sumatra bersifat adaptif, toleran, dan multikultural.' }
+];
+
+const CHAPTERS = [
+  {
+    id: 0,
+    title: "Pendahuluan: Tujuan & Capaian",
+    summary: "Tujuan, capaian, dan peta konsep modul interaktif ini.",
+    requiredXp: 0,
+    content: [
+        { type: 'heading', text: "Selamat Datang, Penjelajah!" },
+        { type: 'paragraph', text: "\tAnda akan memulai perjalanan menelusuri jejak-jejak peradaban Islam di Pulau Sumatra. E-modul ini bukan sekadar bacaan pasif. Ini adalah sebuah aplikasi pembelajaran interaktif yang dirancang untuk menguji pemahaman Anda, memacu rasa ingin tahu Anda, dan memberikan penghargaan atas kemajuan Anda melalui sistem gamifikasi. Modul ini akan membawa Anda melintasi waktu, dari teori-teori awal kedatangan Islam, berdirinya kesultanan pertama yang megah, hingga proses akulturasi yang unik dengan budaya lokal yang sudah mengakar kuat. Bersiaplah untuk menjadi saksi bagaimana sebuah peradaban besar lahir dan berkembang di tanah Sumatra." },
+        { type: 'subheading', text: "Tujuan Pembelajaran" },
+        { type: 'paragraph', text: "Setelah menyelesaikan modul ini, Anda diharapkan mampu:\n1. Menganalisis berbagai teori dan bukti arkeologis mengenai proses masuknya Islam ke Sumatra.\n2. Membandingkan karakteristik sosial, politik, dan ekonomi dari kesultanan-kesultanan besar seperti Samudra Pasai dan Aceh Darussalam.\n3. Menjelaskan faktor-faktor yang menyebabkan keruntuhan Sriwijaya dan bagaimana proses transisi ke era Islam terjadi secara damai.\n4. Mengevaluasi proses dialektika dan sintesis unik antara ajaran Islam dengan adat istiadat lokal yang kuat, khususnya di Minangkabau.\n5. Mengidentifikasi berbagai bentuk akulturasi dan multikulturalisme sebagai warisan peradaban Islam di Sumatra.\n6. Mengontekstualisasikan peran strategis Sumatra dalam jaringan perdagangan dan intelektual Muslim global pada masanya." },
+        { type: 'subheading', text: "Peta Konsep Modul" },
+        { type: 'timeline', data: PETA_KONSEP_BAB_0 },
+        { type: 'paragraph', text: "\tModul ini dirancang secara kronologis dan tematik. Anda harus menyelesaikan materi dan kuis di setiap bab secara berurutan untuk membuka bab selanjutnya. Setiap kuis yang Anda selesaikan akan memberikan Poin Pengalaman (XP) yang akan meningkatkan level Anda, dari seorang 'Musafir' hingga menjadi 'Legenda Akademis'. Selamat belajar dan bertualang!" }
+    ]
+  },
+  {
+    id: 1,
+    title: "Kesultanan Samudra Pasai",
+    summary: "Mengenal Samudra Pasai, kerajaan Islam pertama di Nusantara.",
+    requiredXp: 0,
+    content: [
+        { type: 'heading', text: "Gerbang Islam di Nusantara" },
+        { type: 'image', src: 'samudra-pasai.jpg', alt: 'Ilustrasi kejayaan Kesultanan Samudra Pasai dengan kapal-kapal dagang di pelabuhan.', caption: 'Nisan Sultan Malik al-Saleh, bukti otentik berdirinya Kesultanan Samudra Pasai.' },
+        { type: 'subheading', text: "Sejarah Berdirinya Kerajaan" },
+        { type: 'paragraph', text: `\tMunculnya Kesultanan Samudra Pasai pada abad ke-13 menandai sebuah epos baru dalam sejarah Nusantara, yaitu epos Islamisasi. Proses kedatangan Islam itu sendiri merupakan subjek perdebatan akademis yang kompleks. Teori Gujarat, yang dipopulerkan oleh sarjana Belanda seperti Snouck Hurgronje, berpendapat bahwa Islam dibawa oleh para pedagang dari Gujarat, India, yang corak keislamannya bersifat sufistik. Bukti yang sering diajukan adalah kesamaan gaya nisan di Pasai dengan yang ditemukan di Cambay, Gujarat. Namun, teori ini dianggap memiliki kelemahan karena seolah-olah mengesampingkan peran sentral dari pusat peradaban Islam di Timur Tengah.` },
+        { type: 'image', src: 'map-teori-datang.jpg', alt: 'Peta jalur perdagangan Samudra Hindia', caption: 'Ilustrasi peta jalur dagang kuno yang menghubungkan Arab, Persia, Gujarat, dan Nusantara.' },
+        { type: 'paragraph', text: `\tTeori lain, Teori Persia, menunjuk pada beberapa kesamaan tradisi budaya, seperti perayaan 10 Muharram, sebagai bukti pengaruh Syiah dari Persia. Namun, teori yang paling kuat saat ini, yang didukung oleh banyak sejarawan modern, adalah Teori Arab atau Mekkah. Teori ini berargumen bahwa Islam datang langsung dari jantungnya di Timur Tengah, dibawa oleh para pedagang dan sufi Arab. Argumen ini diperkuat oleh fakta bahwa para raja Pasai menggunakan gelar 'al-Malik' yang lazim di Mesir, serta dominasi Mazhab Syafi'i—mazhab fikih utama di Mesir dan Yaman pada masa itu—di Pasai dan seluruh Nusantara. Penggunaan mazhab ini menunjukkan adanya transmisi intelektual yang terstruktur dan bukan sekadar pengaruh insidental dari pedagang biasa.\n\n\tMenurut M.C. Ricklefs (2008), terlepas dari perdebatan asal-usulnya, yang pasti adalah Pasai tumbuh pesat karena lokasinya yang sangat strategis di Selat Malaka. Ia menjadi 'emporium' internasional pertama di Nusantara yang bercorak Islam. Catatan Marco Polo pada tahun 1292 yang menyebut keberadaan komunitas Muslim di Perlak, dekat Pasai, mengindikasikan bahwa Islam telah hadir bahkan sebelum Pasai resmi berdiri sebagai sebuah kesultanan besar. Ini menunjukkan bahwa Islamisasi adalah proses evolusioner yang didorong oleh perdagangan, bukan penaklukan tiba-tiba. Keberhasilan Pasai dalam mengelola pelabuhannya, menjamin keamanan bagi pedagang, dan menyediakan komoditas berharga seperti lada dan emas, menjadikannya magnet bagi para saudagar dari seluruh penjuru dunia. Mereka tidak hanya berdagang, tetapi juga membawa serta keyakinan, ilmu pengetahuan, dan tradisi budaya mereka, yang kemudian berinteraksi dengan masyarakat lokal.` },
+        { type: 'image', src: 'pasai-koin-emas.jpg', caption: 'Koin Emas (Dirham) Samudra Pasai, bukti kemakmuran dagang.' },
+        { type: 'subheading', text: "Pusat Studi Islam dan Intelektual" },
+        { type: 'paragraph', text: `\tPeran Samudra Pasai jauh melampaui sekadar pusat perdagangan. Ia adalah mercusuar intelektualisme Islam pertama di Asia Tenggara. Kesaksian paling rinci datang dari penjelajah Maroko, Ibnu Batutah, yang mengunjungi Pasai pada tahun 1345. Dalam catatannya, ia menggambarkan Sultan Al-Malik az-Zahir II sebagai pemimpin yang sangat saleh, rendah hati, dan bersemangat dalam menuntut ilmu. Istana sultan bukanlah sekadar pusat kekuasaan politik, melainkan juga sebuah majelis ilmu di mana sultan secara rutin berdiskusi dengan para fuqaha (ahli hukum Islam) dan ulama lainnya. Ibnu Batutah secara spesifik mencatat ketaatan Pasai pada Mazhab Syafi'i, yang menunjukkan tingkat ortodoksi dan institutionalisasi keagamaan yang sudah mapan. Ia juga mengamati bahwa sultan memiliki hubungan yang erat dengan para ulama dari Persia dan wilayah Timur Tengah lainnya, yang sering diundang ke istana untuk memberikan ceramah dan pengajaran.\n\n\tAzyumardi Azra (2004) dalam karyanya yang monumental tentang jaringan ulama, menempatkan Pasai sebagai simpul (node) paling awal dan vital dalam 'Jaringan Ulama Timur Tengah dan Kepulauan Nusantara'. Para ulama dari Pasai, seperti Syekh Ismail yang disebut dalam Hikayat Raja-Raja Pasai, menjadi agen penyebaran Islam yang berkelana ke berbagai penjuru Nusantara. Sebaliknya, para penuntut ilmu dari wilayah lain datang ke Pasai untuk memperdalam pengetahuan agama mereka sebelum kembali ke kampung halaman untuk berdakwah. Dengan demikian, Pasai tidak hanya mengekspor lada dan emas, tetapi juga mengekspor gagasan, teks-teks keagamaan, dan yang terpenting, kader-kader ulama yang akan membentuk wajah Islam di seluruh kepulauan. Pasai adalah 'rahim' intelektual yang melahirkan generasi awal para penyebar Islam di Asia Tenggara.` },
+        { type: 'interactiveStructure', data: TOKOH_PENTING_BAB_1 },
+        { type: 'quiz', data: QUIZ_BAB_1_NEW },
+        {
+            type: 'referenceList',
+            title: 'Daftar Rujukan (Bab 1)',
+            items: [
+                'Azra, Azyumardi. (2004). Jaringan Ulama Timur Tengah dan Kepulauan Nusantara Abad XVII & XVIII. Jakarta: Kencana.',
+                'Ricklefs, M.C. (2008). A History of Modern Indonesia since c.1200. Palgrave Macmillan.',
+                'Wolters, O.W. (1970). The Fall of Srivijaya in Malay History. Ithaca, NY: Cornell University Press.'
+            ]
+        }
+    ]
+  },
+  {
+    id: 2,
+    title: "Kesultanan Aceh Darussalam",
+    summary: "Menyelami kejayaan Aceh sebagai raksasa maritim Asia Tenggara.",
+    requiredXp: XP_MINIMUM_PER_BAB,
+    content: [
+        { type: 'heading', text: "Sang Penerus Kejayaan Islam" },
+        { type: 'image', src: 'kesultanan-aceh.jpg', alt: 'Ilustrasi kemegahan Masjid Raya Baiturrahman pada masa Kesultanan Aceh.', caption: 'Ilustrasi kemegahan Masjid Raya Baiturrahman pada masa Kesultanan Aceh.' },
+        { type: 'subheading', text: "Pewaris Kekuatan di Ujung Sumatra" },
+        { type: 'paragraph', text: `\tKebangkitan Kesultanan Aceh Darussalam pada awal abad ke-16 merupakan respons langsung terhadap pergeseran geopolitik besar di Selat Malaka: jatuhnya Malaka ke tangan Portugis pada 1511. Peristiwa ini tidak hanya menciptakan kekosongan kekuasaan, tetapi juga memicu solidaritas di antara para pedagang Muslim yang mencari pelabuhan baru yang aman dan anti-Portugis. Aceh, di bawah kepemimpinan pendirinya Sultan Ali Mughayat Syah, dengan cerdas memanfaatkan momentum ini, menyatukan kekuatan-kekuatan kecil di sekitarnya dan memproklamasikan dirinya sebagai pewaris sah kejayaan Islam yang sebelumnya dipegang oleh Pasai. Berbeda dengan Pasai yang lebih fokus pada perdagangan, Aceh sejak awal telah memiliki orientasi militeristik dan politik yang kuat, didorong oleh kebutuhan untuk menghadapi ancaman Portugis.` },
+        { type: 'image', src: 'surat-utsmaniyah.jpg', alt: 'Surat Aceh ke Utsmaniyah', caption: 'Ilustrasi surat diplomatik dari Sultan Aceh kepada Khalifah Utsmaniyah, bukti aliansi global.' },
+        { type: 'paragraph', text: `\tKesultanan ini mencapai puncak keemasannya di bawah pemerintahan Sultan Iskandar Muda (1607-1636). Pada masanya, Aceh menjelma menjadi imperium maritim yang mengontrol seluruh pesisir barat dan timur Sumatra, serta menancapkan pengaruhnya hingga ke Semenanjung Malaya seperti Pahang dan Kedah. Anthony Reid (2005) menggambarkan Aceh sebagai sebuah 'Indonesian Frontier', sebuah negara yang dinamis dan ekspansionis, dibentuk oleh tekanan dan peluang dari persaingan global. Persaingannya dengan Portugis di Malaka bukan sekadar perebutan kontrol atas jalur perdagangan rempah-rempah yang sangat lukratif. Lebih dari itu, konflik ini memiliki dimensi ideologis yang kuat, dipandang sebagai perjuangan antara kekuatan Islam (Dar al-Islam) melawan agresi Kristen Eropa. Armada laut Aceh yang besar dan ditakuti, yang terdiri dari ratusan kapal perang dan ribuan prajurit, berulang kali melancarkan serangan besar-besaran ke Malaka, menjadikan Selat Malaka sebagai medan pertempuran sengit selama lebih dari satu abad. Iskandar Muda juga dikenal sebagai pembangun yang ulung, yang memperindah ibu kota Kutaraja (kini Banda Aceh) dengan istana megah dan Masjid Raya Baiturrahman yang menjadi ikon.` },
+        { type: 'image', src: 'aceh-kanun-meukuta.jpg', caption: 'Sebuah naskah Kanun Meukuta Alam, kitab hukum Kesultanan Aceh.' },
+        { type: 'subheading', text: "Sistem Politik dan Ekonomi yang Maju" },
+        { type: 'paragraph', text: `\tKehebatan Aceh tidak hanya terletak pada kekuatan militernya, tetapi juga pada struktur internalnya yang canggih dan kosmopolitan. Fondasi hukum dan administrasi negara diatur dalam sebuah kitab undang-undang yang dikenal sebagai 'Adat Meukuta Alam' atau 'Kanun Meukuta Alam'. Ini adalah sebuah kompilasi hukum yang komprehensif, memadukan hukum syariah Islam dengan hukum adat lokal (\`adat\`). Kanun ini mengatur berbagai hal, mulai dari struktur hierarki pemerintahan—yang membedakan kekuasaan sultan di pusat dengan para Uleebalang (bangsawan lokal) di daerah—sistem peradilan, peraturan perdagangan di pelabuhan, hingga hukum pidana dan perdata. Keberadaan kanun ini menunjukkan tingkat birokrasi dan sentralisasi kekuasaan yang tinggi, yang menjadi kunci stabilitas imperiumnya. Selain itu, Aceh juga memiliki jabatan Syaikhul Islam, seorang penasihat agama tertinggi bagi sultan, yang diisi oleh ulama-ulama kaliber internasional seperti Hamzah Fansuri dan Nuruddin ar-Raniri.\n\n\tDi panggung internasional, Aceh secara aktif memposisikan dirinya sebagai pemain global. Sejak abad ke-16, Aceh telah mengirimkan utusan diplomatik ke jantung Kesultanan Utsmaniyah di Istanbul. Seperti yang dianalisis oleh Reid (2005), misi ini memiliki tujuan ganda: meminta bantuan militer dan teknologi (terutama meriam dan ahli persenjangan) untuk melawan Portugis, sekaligus mencari legitimasi dan pengakuan dari Khalifah Utsmaniyah sebagai 'pelindung' umat Islam di ujung timur dunia. Hubungan ini menjadikan Aceh bagian dari jaringan politik pan-Islamisme global dan memberinya prestise yang luar biasa di mata kesultanan-kesultanan lain di Nusantara. Perekonomiannya yang didominasi oleh ekspor lada, yang pada puncaknya memasok lebih dari setengah kebutuhan lada dunia, memberikan kekayaan yang melimpah untuk mendanai armada perang dan pembangunan istana yang megah. Selain lada, komoditas penting lainnya adalah kapur barus, emas dari pedalaman, dan gading gajah.` },
+        { type: 'interactiveStructure', data: TOKOH_PENTING_BAB_2 },
+        { type: 'quiz', data: QUIZ_BAB_2_NEW },
+        {
+            type: 'referenceList',
+            title: 'Daftar Rujukan (Bab 2)',
+            items: [
+                'Reid, Anthony. (2005). An Indonesian Frontier: Acehnese and Other Histories of Sumatra. Singapore: NUS Press.',
+                'Ricklefs, M.C. (2008). A History of Modern Indonesia since c.1200. Palgrave Macmillan.',
+                'Azra, Azyumardi. (2004). Jaringan Ulama Timur Tengah dan Kepulauan Nusantara Abad XVII & XVIII. Jakarta: Kencana.'
+            ]
+        }
+    ]
+  },
+  {
+    id: 3,
+    title: "Runtuhnya Sriwijaya dan Transisi ke Islam",
+    summary: "Memahami transisi dari Kerajaan Sriwijaya ke era kesultanan Islam.",
+    requiredXp: XP_MINIMUM_PER_BAB * 2,
+    content: [
+        { type: 'heading', text: "Pergantian Babak Sejarah Sumatra" },
+        { type: 'image', src: 'transisi-sriwijaya.jpg', alt: 'Ilustrasi kontras antara candi Sriwijaya yang mulai pudar dengan masjid yang mulai dibangun di pesisir.', caption: 'Candi Muara Takus, salah satu peninggalan era Sriwijaya yang memudar seiring masuknya Islam.' },
+        { type: 'subheading', text: "Faktor-Faktor Keruntuhan Sriwijaya" },
+        { type: 'image', src: 'serangan-chola.jpg', alt: 'Ilustrasi serangan Chola', caption: 'Ilustrasi serangan armada Chola ke pelabuhan Sriwijaya pada 1025 M, awal mula kemunduran.' },
+        { type: 'paragraph', text: `\tSelama lebih dari enam abad, Sriwijaya adalah sebuah talasokrasi atau kemaharajaan maritim yang tak tertandingi di Asia Tenggara. Namun, kemundurannya adalah sebuah proses yang kompleks dan multifaktorial, bukan peristiwa tunggal. Salah satu tesis paling berpengaruh mengenai keruntuhannya diajukan oleh O.W. Wolters (1970). Wolters berpendapat bahwa kekuatan Sriwijaya sangat bergantung pada kemampuannya untuk memonopoli dan mengontrol perdagangan di Selat Malaka dan Selat Sunda. Ketika kemampuan ini terkikis, maka seluruh struktur kekuasaannya pun runtuh.\n\n\tPukulan telak pertama datang pada tahun 1025 melalui serangan besar-besaran dari Dinasti Chola di India Selatan di bawah pimpinan Rajendra Chola I. Serangan ini, meskipun tidak menghancurkan Sriwijaya sepenuhnya, berhasil melumpuhkan pusat-pusat pelabuhan utamanya dan merusak reputasinya sebagai penguasa lautan yang aman. Secara internal, loyalitas para datu atau penguasa-penguasa bawahan mulai goyah. Selain itu, Sriwijaya juga menghadapi tekanan militer dari kerajaan-kerajaan yang sedang bangkit di Jawa, seperti Singasari di bawah Kertanagara dan kemudian Majapahit. Faktor lingkungan seperti pendangkalan Sungai Musi, yang diduga menjadi lokasi ibu kotanya, juga mungkin mempersulit akses kapal-kapal besar ke pusat kekuasaan. Kombinasi dari pelemahan militer eksternal, disintegrasi politik internal, dan potensi masalah ekologis ini secara bertahap menggerus fondasi kekuasaan Sriwijaya, menciptakan kekosongan kekuatan yang siap diisi oleh entitas politik baru.` },
+        { type: 'image', src: 'peta-selat-malaka.jpg', caption: 'Peta Selat Malaka, jalur perdagangan kunci yang beralih dari Sriwijaya ke pelabuhan Islam.' },
+        { type: 'subheading', text: "Transisi Damai Melalui Perdagangan" },
+        { type: 'paragraph', text: `\tIslamisasi Sumatra seringkali disalahartikan sebagai penaklukan militer atas sisa-sisa Sriwijaya. Namun, bukti-bukti sejarah menunjukkan sebuah proses yang jauh lebih organik dan damai, yang didorong oleh dinamika ekonomi. Sejarawan seperti Ricklefs (2008) menekankan bahwa Islam menyebar melalui jalur perdagangan, mengisi kekosongan yang ditinggalkan oleh Sriwijaya. Ini adalah sebuah pergeseran paradigma, dari hegemoni politik-militer ke jaringan komersial yang lebih fleksibel.\n\n\tSeiring dengan melemahnya kontrol Sriwijaya, para pedagang internasional—terutama Muslim dari Arab, Persia, dan Gujarat—mulai menghindari pelabuhan-pelabuhan Sriwijaya yang tidak lagi aman dan mungkin memungut pajak yang tinggi. Mereka beralih ke pelabuhan-pelabuhan alternatif yang lebih kecil dan independen di pesisir utara Sumatra, seperti Perlak, Pasai, dan Aru. Di pelabuhan-pelabuhan inilah proses Islamisasi berakar. Para pedagang Muslim tidak hanya membawa barang dagangan, tetapi juga ide, keyakinan, dan praktik hukum Islam. Mereka menetap, membentuk komunitas, dan seringkali menikah dengan perempuan lokal, termasuk dari kalangan elite penguasa.\n\n\tPara penguasa lokal atau datu melihat keuntungan besar dalam memeluk Islam; hal ini tidak hanya memberikan mereka keuntungan spiritual, tetapi juga memperkuat aliansi komersial dan politik dengan jaringan perdagangan Muslim yang luas dan kuat. Dengan memeluk Islam, seorang datu dapat masuk ke dalam 'lingkaran dalam' perdagangan Samudra Hindia, mendapatkan akses yang lebih baik terhadap komoditas, kredit, dan informasi. Dengan demikian, pelabuhan-pelabuhan ini secara bertahap bertransformasi dari bandar-bandar kecil menjadi kesultanan-kesultanan Islam yang berdaulat. Transisi ini bukanlah sebuah revolusi, melainkan evolusi ekonomi-politik di mana hegemoni Sriwijaya secara perlahan digantikan oleh jaringan pelabuhan Islam yang lebih dinamis dan terdesentralisasi, yang pada akhirnya mewarisi supremasi maritim di Selat Malaka.` },
+        { type: 'timeline', data: TIMELINE_BAB_3 },
+        { type: 'legacyExplorer', data: FAKTA_MENARIK_BAB_3 },
+        { type: 'quiz', data: QUIZ_BAB_3_NEW },
+        {
+            type: 'referenceList',
+            title: 'Daftar Rujukan (Bab 3)',
+            items: [
+                'Wolters, O.W. (1970). The Fall of Srivijaya in Malay History. Ithaca, NY: Cornell University Press.',
+                'Ricklefs, M.C. (2008). A History of Modern Indonesia since c.1200. Palgrave Macmillan.',
+                'Azra, Azyumardi. (2004). Jaringan Ulama Timur Tengah dan Kepulauan Nusantara Abad XVII & XVIII. Jakarta: Kencana.'
+            ]
+        }
+    ]
+  },
+  {
+    id: 4,
+    title: "Islam di Minangkabau",
+    summary: "Menjelajahi akulturasi unik Islam dan adat Minangkabau.",
+    requiredXp: XP_MINIMUM_PER_BAB * 3,
+    content: [
+        { type: 'heading', text: "Harmoni Antara Adat dan Agama" },
+        { type: 'image', src: 'islam-minang.jpg', alt: 'Ilustrasi Rumah Gadang yang ikonik dengan latar belakang surau atau masjid, simbol harmoni.', caption: 'Masjid Tuo Kayu Jao, contoh akulturasi arsitektur Minangkabau dengan ajaran Islam.' },
+        { type: 'subheading', text: "Peran Pedagang dan Ulama Sufi" },
+        { type: 'paragraph', text: `\tPenyebaran Islam ke wilayah dataran tinggi Minangkabau (darek) dari daerah pesisir (pasisia) adalah sebuah proses yang gradual dan sebagian besar bersifat damai, dimulai sekitar abad ke-16. Berbeda dengan wilayah pesisir yang lebih kosmopolitan, darek memiliki struktur sosial dan adat yang sangat kuat dan telah mapan. Agen utama Islamisasi di wilayah ini bukanlah tentara, melainkan para pedagang dan, yang lebih penting, para ulama sufi. Ajaran tasawuf, melalui berbagai tarekat, dengan penekanannya pada spiritualitas batin dan kemampuannya untuk beradaptasi dengan kepercayaan lokal, terbukti sangat efektif dalam memperkenalkan Islam kepada masyarakat Minangkabau.\n\n\tTokoh sentral dalam gelombang awal ini adalah Syeikh Burhanuddin Ulakan. Setelah menimba ilmu agama di Aceh di bawah bimbingan Syeikh Abdurrauf as-Singkili, seorang ulama besar Tarekat Syattariyah, ia kembali ke Minangkabau pada akhir abad ke-17. Ia mendirikan sebuah surau (pusat pendidikan Islam) di Ulakan, Pariaman, yang dengan cepat menjadi pusat penyebaran Islam yang berpengaruh. Melalui jaringan murid-muridnya, ajaran Islam yang bercorak sufistik ini menyebar ke seluruh pelosok Minangkabau. Pendekatan para sufi yang akomodatif ini memungkinkan Islam untuk diterima dan diintegrasikan ke dalam kehidupan masyarakat tanpa menimbulkan gejolak sosial yang berarti pada awalnya, sebagaimana dicatat oleh banyak sejarawan, termasuk Azyumardi Azra (2004) yang menyoroti peran penting tarekat dalam Islamisasi awal. Para ulama ini seringkali mengemas ajaran Islam dalam bentuk-bentuk yang sudah dikenal masyarakat, seperti sastra lisan dan syair.` },
+        { type: 'subheading', text: "Dialektika dan Sintesis: Adat Basandi Syarak" },
+        { type: 'image', src: 'perang-padri.jpg', alt: 'Lukisan Perang Padri', caption: 'Lukisan Perang Padri, konflik yang akhirnya melahirkan sintesis "Adat basandi syarak".' },
+        { type: 'paragraph', text: `\tHubungan antara Islam dan adat di Minangkabau tidak selamanya berjalan mulus. Ia adalah sebuah proses dialektis yang penuh dengan negosiasi, ketegangan, dan akhirnya sintesis. Pada awalnya, Islam dan adat berjalan secara paralel. Namun, pada awal abad ke-19, ketegangan ini memuncak dalam Perang Padri (1803-1837). Gerakan Padri, yang dipengaruhi oleh Wahabisme puritan dari Timur Tengah, berusaha untuk memurnikan praktik Islam dari apa yang mereka anggap sebagai unsur-unsur adat yang bid'ah (inovasi yang sesat) dan syirik. Mereka menentang praktik seperti sabung ayam, judi, dan beberapa aspek hukum waris adat.\n\n\tKonflik berdarah antara kaum Padri (ulama puritan) dan kaum Adat (penjaga tradisi) ini, yang kemudian diperumit oleh intervensi Belanda, menjadi titik balik yang krusial. Sebagaimana dianalisis oleh Taufik Abdullah (1971), meskipun penuh kekerasan, Perang Padri pada akhirnya memaksa kedua belah pihak untuk melakukan rekonsiliasi dan redefinisi hubungan antara agama dan adat. Hasil dari trauma kolektif dan refleksi mendalam ini adalah lahirnya adagium agung: 'Adat basandi syarak, syarak basandi Kitabullah' (Adat bersendi pada syariat, syariat bersendi pada Al-Qur'an).\n\n\tFalsafah ini bukanlah sekadar slogan, melainkan sebuah sintesis yang mendalam. Ia menegaskan supremasi syariat Islam sebagai sumber hukum tertinggi, tetapi pada saat yang sama mengakui dan melegitimasi eksistensi adat selama tidak bertentangan dengan prinsip-prinsip Al-Qur'an dan Sunnah. Bahkan sistem matrilineal yang unik—di mana garis keturunan dan harta pusaka tinggi (milik komunal) diwariskan melalui garis ibu—tetap dipertahankan, sementara hukum waris Islam (faraidh) diterapkan pada harta pencaharian (milik pribadi). Sintesis inilah yang membentuk identitas unik masyarakat Minangkabau hingga hari ini, sebuah contoh luar biasa dari kemampuan Islam untuk berdialog dengan budaya lokal.` },
+        { type: 'interactiveStructure', data: INTERACTIVE_STRUCTURE_BAB_4 },
+        { type: 'interactiveStructure', data: TOKOH_PENTING_BAB_4 },
+        { type: 'quiz', data: QUIZ_BAB_4_NEW },
+        {
+            type: 'referenceList',
+            title: 'Daftar Rujukan (Bab 4)',
+            items: [
+                'Abdullah, Taufik. (1971). Schools and Politics: The Kaum Muda Movement in West Sumatra. Ithaca, NY: Cornell Modern Indonesia Project.',
+                'Azra, Azyumardi. (2004). Jaringan Ulama Timur Tengah dan Kepulauan Nusantara Abad XVII & XVIII. Jakarta: Kencana.',
+                'Ricklefs, M.C. (2008). A History of Modern Indonesia since c.1200. Palgrave Macmillan.'
+            ]
+        }
+    ]
+  },
+   {
+    id: 5,
+    title: "Multikulturalisme dalam Islamisasi",
+    summary: "Melihat Islamisasi Sumatra yang menciptakan budaya beragam.",
+    requiredXp: XP_MINIMUM_PER_BAB * 4,
+    content: [
+        { type: 'heading', text: "Wajah Islam yang Beragam" },
+        { type: 'image', src: 'akulturasi-budaya.jpg', alt: 'Kolase yang menunjukkan keberagaman budaya Islam di Sumatra: arsitektur, pakaian adat, dan seni.', caption: 'Upacara Tabuik di Pariaman, salah satu wujud akulturasi budaya lokal dengan tradisi Islam.' },
+        { type: 'subheading', text: "Bukan Penyeragaman, Tapi Penyerapan Kreatif" },
+        { type: 'paragraph', text: `\tMemahami Islamisasi di Sumatra, dan di Nusantara secara umum, menuntut kita untuk membedakan konsep-konsep sosiologis yang penting. Proses ini bukanlah 'asimilasi', di mana budaya lokal lebur dan hilang ke dalam budaya pendatang yang dominan. Sebaliknya, ia lebih tepat digambarkan sebagai proses 'akulturasi' dan 'sinkretisme'. Akulturasi merujuk pada proses di mana dua budaya bertemu dan saling meminjam unsur, menciptakan sesuatu yang baru namun tanpa menghilangkan identitas asli masing-masing. Sinkretisme melangkah lebih jauh, memadukan elemen-elemen dari sistem kepercayaan yang berbeda menjadi satu kesatuan yang koheren.\n\n\tSeperti yang dijelaskan oleh M.C. Ricklefs (2008), Islam di Nusantara tidak datang ke dalam ruang hampa budaya. Ia tiba di sebuah dunia yang telah memiliki lapisan-lapisan peradaban Hindu-Buddha dan kepercayaan animistik yang mengakar kuat. Alih-alih memberangus tradisi-tradisi ini, Islam seringkali 'menyerapnya secara kreatif'. Islam menyediakan kerangka teologis dan etis yang baru—monoteisme, syariah, konsep umat—yang kemudian diekspresikan melalui medium budaya yang sudah ada. Hasilnya adalah sebuah mozaik Islam yang sangat beragam. Ekspresi keislaman di Aceh, yang lebih kental dengan pengaruh ortodoksi Timur Tengah karena hubungannya yang intens dengan dunia Arab dan Utsmaniyah, terasa berbeda dengan Islam di Minangkabau yang bersintesis secara mendalam dengan adat matrilineal. Keduanya adalah Islam yang sahih, namun ditampilkan dalam 'wadah' budaya yang berbeda, menunjukkan fleksibilitas dan kapasitas adaptif peradaban Islam itu sendiri. Ini melahirkan apa yang kita kenal sebagai Islam Nusantara, yang menghargai konteks lokal sebagai bagian tak terpisahkan dari praktik keagamaan.` },
+        { type: 'subheading', text: "Bukti-bukti Toleransi dalam Budaya" },
+        { type: 'image', src: 'naskah-jawi.jpg', alt: 'Naskah Aksara Jawi', caption: 'Naskah kuno beraksara Jawi (Arab-Melayu), bukti akulturasi sastra dan bahasa.' },
+        { type: 'paragraph', text: `\tPendekatan dakwah yang umumnya bersifat toleran dan persuasif meninggalkan jejak yang tak terhapuskan dalam berbagai aspek kebudayaan. Para wali dan ulama awal seringkali menggunakan medium yang akrab dengan masyarakat, seperti seni pertunjukan (wayang), sastra (hikayat), dan tradisi lisan. Dalam arsitektur, banyak masjid kuno di Sumatra, seperti Masjid Tuo Kayu Jao di Minangkabau, tidak mengadopsi bentuk kubah Timur Tengah, melainkan atap tumpang (bertingkat) yang merupakan evolusi dari arsitektur lokal dan pra-Islam. Bentuk ini sarat makna filosofis yang seringkali dikaitkan dengan konsep-konsep spiritual lokal yang kemudian diislamkan.\n\n\tDalam dunia sastra, lahirnya aksara Jawi (Arab-Melayu), adalah contoh akulturasi yang brilian; ia menggunakan aksara Arab untuk menuliskan bahasa Melayu, memungkinkan lahirnya ribuan karya sastra yang memadukan narasi lokal dengan nilai-nilai Islam, seperti Hikayat Raja-Raja Pasai. Bahkan dalam sistem penanggalan, serapan nama-nama hari dari Bahasa Arab (Senin, Selasa, Rabu, Kamis, Jumat) menunjukkan betapa dalamnya Islam meresap ke dalam ritme kehidupan sehari-hari. Dalam seni ukir, larangan Islam terhadap penggambaran makhluk hidup secara realistis tidak mematikan seni tersebut. Sebaliknya, para seniman mengalihkannya menjadi motif flora (tumbuh-tumbuhan, seperti pola 'pucuk rebung') dan kaligrafi yang rumit dan indah, menghiasi rumah adat, masjid, dan bahkan senjata. Semua ini, menurut analisis Ricklefs (2008), adalah bukti dari sebuah proses Islamisasi yang bersifat 'simbiotik', di mana Islam dan budaya lokal saling memperkaya dan membentuk identitas baru yang unik dan multikultural.` },
+        { type: 'legacyExplorer', data: FAKTA_MENARIK_BAB_5 },
+        { type: 'legacyExplorer', data: LEGACY_EXPLORER_BAB_5 },
+        { type: 'quiz', data: QUIZ_BAB_5_NEW },
+        {
+            type: 'referenceList',
+            title: 'Daftar Rujukan (Bab 5)',
+            items: [
+                'Ricklefs, M.C. (2008). A History of Modern Indonesia since c.1200. Palgrave Macmillan.',
+                'Azra, Azyumardi. (2004). Jaringan Ulama Timur Tengah dan Kepulauan Nusantara Abad XVII & XVIII. Jakarta: Kencana.',
+                'Reid, Anthony. (2005). An Indonesian Frontier: Acehnese and Other Histories of Sumatra. Singapore: NUS Press.'
+            ]
+        }
+    ]
+  },
+  {
+    id: 6,
+    title: "Kesimpulan",
+    summary: "Rangkuman perjalanan dan warisan Islamisasi di Sumatra.",
+    requiredXp: XP_MINIMUM_PER_BAB * 5,
+    content: [
+        { type: 'heading', text: "Warisan Jejak Harmoni" },
+        { type: 'image', src: 'kesimpulan-banner.jpg', alt: 'Kolase keberagaman budaya Islam di Sumatra', caption: 'Peta Sumatra dengan berbagai peninggalan budaya.' },
+        { type: 'subheading', text: "Refleksi Akhir Perjalanan Sejarah" },
+        { type: 'paragraph', text: `\tPerjalanan kita menelusuri jejak Islamisasi di Sumatra telah menunjukkan bahwa sejarah bukanlah sekadar rangkaian tanggal dan peristiwa, melainkan sebuah proses dialektika yang kompleks dan dinamis antara ide, manusia, dan lingkungan. Islam tidak hadir di Sumatra sebagai entitas monolitik yang kaku, melainkan sebagai sebuah peradaban yang hidup, yang mampu berdialog, bernegosiasi, dan bersintesis dengan realitas sosial-budaya yang ditemuinya.\n\n\tDari Samudra Pasai, kita belajar bahwa perdagangan bisa menjadi medium penyebaran gagasan yang lebih efektif daripada pedang, mengubah sebuah pelabuhan menjadi pusat intelektual yang sinarnya memancar ke seluruh kepulauan (Azra, 2004). Kebesaran Aceh di bawah Iskandar Muda mengajarkan kita tentang bagaimana sebuah kesultanan mampu memadukan kekuatan militer, kecanggihan birokrasi, dan diplomasi internasional untuk menjadi pemain penting di panggung dunia (Reid, 2005).\n\n\tTransisi dari era Sriwijaya menunjukkan bahwa pergeseran peradaban seringkali merupakan evolusi ekonomi yang damai, bukan revolusi berdarah (Wolters, 1970). Dan dari Minangkabau, kita memetik pelajaran berharga tentang bagaimana ketegangan antara tradisi (adat) dan modernitas (agama yang dimurnikan) dapat melahirkan sebuah sintesis filosofis yang unik dan kokoh, 'Adat basandi syarak, syarak basandi Kitabullah' (Abdullah, 1971).` },
+        { type: 'paragraph', text: `\tWarisan terpenting dari proses Islamisasi di Sumatra adalah kemampuannya untuk menghasilkan keragaman dalam kesatuan. Ia membuktikan bahwa Islam dapat diekspresikan dalam berbagai 'wadah' budaya tanpa kehilangan esensi tauhidnya. Proses akulturasi yang kita saksikan dalam arsitektur, sastra, dan adat istiadat adalah bukti dari sebuah 'pribumisasi' Islam yang berhasil, di mana ajaran universal agama menyatu dengan kearifan lokal. Ini adalah cerminan dari sebuah proses historis yang tidak menghancurkan, tetapi membangun di atas fondasi yang sudah ada.\n\n\tSebagaimana disimpulkan oleh Ricklefs (2008), sejarah ini membentuk fondasi dari masyarakat Indonesia modern yang pluralistik. Memahami sejarah ini bukan hanya penting untuk mengetahui masa lalu, tetapi juga untuk menavigasi masa kini; untuk menghargai bahwa identitas keislaman di Nusantara pada hakikatnya bersifat inklusif, adaptif, dan toleran. Ini adalah warisan harmoni yang perlu terus kita gali, rawat, dan refleksikan dalam menghadapi tantangan zaman.` },
+        { type: 'subheading', text: "Terima Kasih" },
+        { type: 'paragraph', text: "\tAnda telah berhasil menyelesaikan seluruh materi. Semoga pengetahuan ini memberikan Anda pemahaman yang lebih dalam tentang bagaimana identitas Islam di Nusantara terbentuk secara harmonis dan penuh toleransi. Anda kini bukan lagi sekadar penjelajah, tetapi seorang penjaga memori sejarah. Teruslah belajar dan jadilah sejarawan bagi generasi Anda!" }
+    ]
+  }
+];
+
+const COMPREHENSIVE_CHATBOT_DATA = {
+  general: [
+    { id: 'g1', question: "Yo, modul ini bahas apa sih?", answer: "Santuy! Modul ini ngajak lo nyelam ke sejarah Islam di Sumatra. Gimana ceritanya Islam bisa masuk, kerajaan-kerajaan gokil apa aja yang muncul, sampe gimana Islam bisa nyatu sama budaya lokal. Keren, kan?",
+      followUp: [
+        { id: 'g1f1', question: "Masuknya lewat perang gitu?", answer: "Nggak juga, Bro. Kebanyakan malah damai lewat jalur dagang. Para pedagang Arab & Persia nyandar, nikah sama orang lokal, bikin komunitas. Lewat situ deh Islam nyebar. Trade, not raid." },
+        { id: 'g1f2', question: "Kerajaan Islam pertama apaan?", answer: "Itu Samudra Pasai, di Aceh. Berdiri sekitar abad ke-13. Ini kayak 'pintu gerbang' Islam di Nusantara." },
+        { id: 'g1f3', question: "Peninggalannya apa aja yg Sabi?", answer: "Banyak! Ada masjid-masjid kuno yang arsitekturnya unik (atapnya tumpang, gak kubah), ada naskah-naskah kuno pake huruf Jawi (Arab-Melayu), sama sistem hukum adat yang nyatu sama syariat Islam." },
+      ]
+    },
+    { id: 'g2', question: "Beda 'Akulturasi' sama 'Sinkretisme' apaan?", answer: "Nih bedanya, Bro. Akulturasi itu kayak 'collab'. Dua budaya (Islam & lokal) ketemu, saling pinjem fitur, tapi identitas aslinya masih ada. Contoh: Masjid atap tumpang. Islamnya dapet, Minangnya dapet.\n\nSinkretisme itu 'fusion' atau 'kawin'. Dua ajaran beda nyampur jadi satu ajaran baru. Kadang batasnya tipis, tapi intinya akulturasi itu lebih ke 'wadah' budayanya." },
+    { id: 'g3', question: "Kenapa modul ini fokus ke Sumatra?", answer: "Karena Sumatra itu 'titik nol'-nya Islam di Nusantara, Bro. Kerajaan Islam pertama (Samudra Pasai) muncul di sana. Dari Sumatra, Islam nyebar ke seluruh kepulauan. Jadi, ngertiin Sumatra itu kunci buat ngertiin sejarah Islam Indonesia." },
+    { id: 'g4', question: "Apa peran para Sufi dalam penyebaran Islam?", answer: "Peran mereka gede banget! Para Sufi atau ahli tasawuf ini ngajarin Islam dengan cara yang 'adem', lewat pendekatan spiritual dan budaya. Mereka gak langsung nentang adat, tapi pelan-pelan masukin nilai Islam ke tradisi lokal. Makanya ajaran mereka gampang diterima." }
+  ],
+  0: [ // Pertanyaan untuk Bab 0 (Pendahuluan)
+    { id: 'c0q1', question: "Tujuan modul ini apaan sih?", answer: "Tujuannya biar lo ngerti banget alur sejarah Islam di Sumatra. Dari teorinya, kerajaan gokilnya, sampe gimana Islam bisa 'collab' sama budaya lokal kayak di Minang." },
+    { id: 'c0q2', question: "Gamifikasi? XP? Maksudnya?", answer: "Yup! Lo cuma bisa dapet XP (Experience Points) dari kuis di akhir setiap bab. XP ini naikin Level lo (dari Musafir sampe Sultan) dan buka bab selanjutnya. Biar belajar gak bosenin!" },
+  ],
+  1: [
+    { id: 'c1q1', question: "Kenapa Samudra Pasai penting banget?", answer: "Soalnya Pasai itu trendsetter! Dia kerajaan Islam pertama, jadi kayak 'role model' buat kerajaan lain. Dia juga pusat dagang gokil di Selat Malaka. Lada sama emasnya laku keras!",
+      followUp: [
+        { id: 'c1f1', question: "Siapa pendirinya?", answer: "Namanya Meurah Silu. Setelah masuk Islam, beliau ganti nama jadi Sultan Malik as-Saleh. Nisannya (batu kubur) jadi bukti tertua (1297 M)." },
+        { id: 'c1f2', question: "Katanya ada teori Islam dari Gujarat, Arab, Persia?", answer: "Nah, itu debat seru para sejarawan. Ada 3 teori utama:\n1. Teori Gujarat: Islam dibawa pedagang India (bukti: nisan mirip di Gujarat).\n2. Teori Persia: Ada tradisi Syiah kayak Tabuik (bukti: pengaruh budaya).\n3. Teori Arab: Datang langsung dari Mekkah/Mesir (bukti: pake gelar 'Al-Malik' & mazhab Syafi'i).\n\nZaman now, Teori Arab (Mekkah) dianggap paling kuat.", imgSrc: 'chat-teori-datang.jpg' },
+        { id: 'c1f3', question: "Ekonominya gimana selain lada?", answer: "Pasai itu kayak 'kota metropolitan' zaman dulu, atau emporium. Mereka punya mata uang emas sendiri (dirham). Selain lada, mereka juga dagangin kapur barus, sutra, dan jadi tempat singgah kapal-kapal dari seluruh dunia. Pajak pelabuhan jadi sumber duit negara yang gede." },
+        { id: 'c1f4', question: "Ada catatan penjelajah lain selain Ibnu Batutah?", answer: "Ada! Sebelum Ibnu Batutah, ada Marco Polo (1292) yang nyebutin keberadaan kerajaan Muslim di Perlak, deket Pasai. Ini bukti bahwa Islam udah ada di sana sebelum Pasai jadi besar. Ada juga catatan dari Tiongkok (Dinasti Ming) yang menyebut Pasai sebagai 'Sumutula'."}
+      ]
+    },
+    { id: 'c1q2', question: "Ibnu Batutah ngapain di Pasai?", answer: "Dia itu travel blogger legendaris dari Maroko. Pas mampir tahun 1345, dia amazed banget. Dia nulis di catatannya kalo Sultan Pasai (Malik az-Zahir II) itu orangnya saleh abis, rendah hati, dan smart banget, suka diskusi sama ulama. Ini bukti Pasai bukan cuma pusat dagang, tapi juga pusat intelektual." },
+  ],
+  2: [
+    { id: 'c2q1', question: "Apa hubungan Aceh dengan Pasai?", answer: "Aceh bisa dibilang sebagai penerus dan pewaris kebesaran Pasai. Ketika Pasai melemah (salah satunya karena serangan Majapahit), Aceh bangkit menjadi kekuatan dominan baru di ujung utara Sumatra.",
+      followUp: [
+        { id: 'c2f1', question: "Sultan Iskandar Muda segokil apa?", answer: "Gokil PARAH. Dia itu 'Sultannya Para Sultan' (1607-1636). Aceh di zaman dia itu superpower regional. Dia kuasai Selat Malaka, armada lautnya ditakuti, dan dagang lada nya monopoli dunia. Dia juga yang bangun Masjid Baiturrahman.", imgSrc: 'chat-iskandar-muda.jpg' },
+        { id: 'c2f2', question: "Apaan tuh 'Kanun Meukuta Alam'?", answer: "Itu 'Kitab UU'-nya Aceh. Keren banget. Isinya ngatur semua, dari hukum pidana, dagang, sampe tata negara. Ini bukti kalo Aceh itu negara modern yang teratur, bukan kaleng-kaleng." },
+        { id: 'c2f3', question: "Beneran Aceh kontak sama Turki Utsmani?", answer: "Beneran, Bro. Bukan hoax. Aceh kirim utusan diplomatik ke Istanbul. Tujuannya: minta 'backing' militer (meriam dll) buat ngelawan Portugis, sekaligus minta restu Khalifah Utsmani sebagai sesama negara Islam besar. Global politics!" },
+        { id: 'c2f4', question: "Siapa ulama terkenal selain Ar-Raniri?", answer: "Ada Syekh Hamzah Fansuri, seorang ulama sufi dan sastrawan besar sebelum Ar-Raniri. Karya-karyanya tentang tasawuf sangat terkenal. Sempat ada perdebatan teologis panas antara pengikut Fansuri dan Ar-Raniri di istana Aceh."}
+      ]
+    },
+    { id: 'c2q2', question: "Kenapa Aceh gak bisa rebut Malaka dari Portugis?", answer: "Pertanyaan bagus. Aceh nyerang Malaka berkali-kali, tapi gagal. Kenapa? Malaka itu bentengnya kuat banget (Benteng A Famosa), teknologinya Eropa. Terus, Portugis dapet bala bantuan dari markasnya di Goa, India. Jadi meskipun Aceh kuat, logistik dan teknologi Portugis di Malaka saat itu masih lebih unggul."}
+  ],
+  3: [
+    { id: 'c3q1', question: "Sriwijaya runtuhnya gara-gara apa?", answer: "Kompleks, Bro. Gak semalam. Faktor utamanya:\n1. Diserang Kerajaan Chola (India) tahun 1025. Ini bikin armada lautnya lumpuh.\n2. Muncul saingan baru (kerajaan di Jawa).\n3. Pelabuhan-pelabuhan kecil di utara Sumatra (kayak Pasai) mulai 'makan' jalur dagangnya. Jadi Sriwijaya pelan-pelan gak relevan lagi." },
+    { id: 'c3q2', question: "Jadi Islam gantiin Sriwijaya gitu?", answer: "Tepat! Tapi bukan lewat perang besar. Lebih kayak 'transisi damai'. Pas Sriwijaya (Buddha) melemah, pelabuhan-pelabuhan Islam baru ini (Pasai, Perlak) tumbuh. Para pedagang Muslim pindah ke pelabuhan baru ini. Akhirnya, pusat ekonomi dan politik pindah dari Sriwijaya ke kesultanan-kesultanan Islam ini." },
+    { id: 'c3q3', question: "Apa peninggalan Sriwijaya yang masih ada?", answer: "Banyak! Ada candi-candi Buddha seperti Candi Muara Takus di Riau dan Candi Muaro Jambi. Ada juga prasasti-prasasti kuno yang menceritakan kebesarannya. Ini bukti bahwa sebelum Islam, ada peradaban besar lain di Sumatra."}
+  ],
+  4: [
+      { id: 'c4q1', question: "Islam di Minang katanya unik, kok bisa?", answer: "Unik banget! Soalnya di sana adatnya kuat banget, apalagi sistem Matrilineal (garis keturunan dari Ibu). Islam masuk gak ngehapus itu.",
+      followUp: [
+          {id: 'c4f2', question: "Matrilineal kok bisa cocok sama Islam?", answer: "Nah, ini jeniusnya orang Minang. Mereka bikin 'kesepakatan'. Harta pusaka tinggi (warisan turun-temurun keluarga besar) tetap lewat jalur ibu, ngikutin adat. Tapi, harta pencaharian (harta yang didapat sendiri) dibagi pake hukum waris Islam (faraidh). Jadi, dua-duanya jalan." },
+          {id: 'c4f3', question: "Terus, Perang Padri itu apa?", answer: "Itu semacam 'perang saudara' antara Kaum Adat (yang santai) sama Kaum Padri (yang agamanya 'lurus' banget, terpengaruh Wahabisme). Kaum Padri mau hapus semua adat yang dianggap gak Islami. Perangnya dahsyat, tapi akhirnya mereka damai dan bikin filosofi 'Adat basandi syarak'."},
+          {id: 'c4f4', question: "Apa itu 'Tungku Tigo Sajarangan'?", answer: "Itu konsep kepemimpinan tiga pilar di Minang: Ninik Mamak (pemimpin adat), Alim Ulama (pemimpin agama), dan Cerdik Pandai (intelektual). Mereka ini 'tiga batu tungku' yang harus seimbang biar 'masakan' (masyarakat) matangnya pas. Keren kan filosofinya?"}
+      ]},
+      { id: 'c4q2', question: "Gimana ceritanya adat sama Islam bisa 'damai'?", answer: "Mereka punya filosofi keren: 'Adat basandi syarak, syarak basandi Kitabullah'. Artinya: Adat itu harus ngikutin syariat (hukum Islam), dan syariat itu ngikutin Al-Qur'an.\n\nSempet ada 'gesekan' (Perang Padri), tapi akhirnya mereka sadar, dua-duanya bisa jalan bareng. Ini sintesis yang gokil." },
+      { id: 'c4f1', question: "Siapa Syeikh Burhanuddin Ulakan?", answer: "Dia tokoh kunci penyebar Islam di dataran tinggi Minang. Dia belajar di Aceh, terus balik kampung bawa ajaran Tasawuf (Sufi) Tarekat Syattariyah. Ajarannya 'adem', jadi gampang diterima sama orang Minang." }
+  ],
+  5: [
+      { id: 'c5q1', question: "Contoh akulturasi paling gampang apa?", answer: "Arsitektur Masjid. Lo liat masjid kuno di Minang (kayak Masjid Tuo Kayu Jao), atapnya 'tumpang' bertingkat kayak rumah adat, gak pake kubah Arab. Itu 'collab' keren antara Islam dan budaya lokal." },
+      { id: 'c5q2', question: "Aksara Jawi itu apa lagi?", answer: "Itu huruf Arab, tapi dipake buat nulis Bahasa Melayu. Jenius kan? Jadi, ajaran Islam bisa ditulis pake bahasa lokal. Lahirlah karya sastra kayak Hikayat Raja-Raja Pasai." },
+      { id: 'c5q3', question: "Upacara Tabuik di Pariaman itu gimana?", answer: "Itu contoh akulturasi yang unik banget. Akarnya dari tradisi Syiah (memperingati Asyura), tapi udah nyampur sama budaya lokal Minang Pesisir. Jadinya festival budaya yang super meriah. Islamnya dapet, budayanya jalan terus." }
+  ],
+  6: [
+    { id: 'c6q1', question: "Bab 6 isinya apa?", answer: "Bab 6 itu Kesimpulan. Ini adalah rangkuman dari seluruh perjalanan kita menelusuri sejarah Islam di Sumatra. Setelah menyelesaikan bab ini, kamu resmi jadi Pakar Sejarah Sumatra!" },
+  ]
+};
+
+// --- HOOKS & CONTEXT ---
+const AppContext = createContext(undefined);
+
+const defaultGameState = {
+  xp: 0,
+  level: 1,
+  badges: [],
+  completedChapters: [],
+  quizStats: {},
+};
+
+const AppProvider = ({ children }) => {
+    const [currentUser, setCurrentUser] = useState(null);
+    const [gameState, setGameState] = useState(null);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const loggedInUserKey = sessionStorage.getItem('loggedInUserKey');
+        if (loggedInUserKey) {
+            const userRef = db.collection("users").doc(loggedInUserKey);
+            userRef.get().then(doc => {
+                if (doc.exists) {
+                    const data = doc.data();
+                    setCurrentUser({ fullName: data.fullName, kelas: data.kelas, sekolah: data.sekolah });
+                    setGameState(data.gameState || defaultGameState);
+                } else {
+                    sessionStorage.removeItem('loggedInUserKey');
+                }
+                setIsLoading(false);
+            }).catch(error => {
+                console.error("Error fetching user data:", error);
+                setIsLoading(false);
+            });
+        } else {
+            setIsLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        if (currentUser && gameState) {
+            const normalizedFullName = currentUser.fullName.trim().toLowerCase();
+            const userRef = db.collection("users").doc(normalizedFullName);
+            userRef.update({ gameState }).catch(error => {
+                console.error("Error saving game state:", error);
+            });
+        }
+    }, [gameState, currentUser]);
+
+    const handleLoginSuccess = (userData) => {
+        const trimmedFullName = userData.fullName.trim();
+        const normalizedFullName = trimmedFullName.toLowerCase();
+        setCurrentUser({ fullName: trimmedFullName, kelas: userData.kelas, sekolah: userData.sekolah });
+        setGameState(userData.gameState || defaultGameState);
+        sessionStorage.setItem('loggedInUserKey', normalizedFullName);
+    };
+
+    const register = async (fullName, kelas, sekolah, password) => {
+        if (!fullName || !kelas || !sekolah || !password) {
+            return { success: false, message: "Semua field harus diisi." };
+        }
+        const normalizedFullName = fullName.trim().toLowerCase();
+        if (!normalizedFullName) {
+            return { success: false, message: "Nama Lengkap tidak boleh kosong." };
+        }
+        const userRef = db.collection("users").doc(normalizedFullName);
+        const doc = await userRef.get();
+        if (doc.exists) {
+            return { success: false, message: "Nama pengguna ini sudah terdaftar." };
+        }
+        const newUser = {
+            fullName: fullName.trim(),
+            kelas,
+            sekolah,
+            password, 
+            gameState: defaultGameState,
+            createdAt: new Date(),
+        };
+        await userRef.set(newUser);
+        handleLoginSuccess(newUser);
+        return { success: true };
+    };
+    
+    const registerAsTeacher = async (fullName, sekolah, password) => {
+        if (password !== 'papcjak0403') {
+             return { success: false, message: "Sandi guru salah." };
+        }
+        const normalizedFullName = fullName.trim().toLowerCase();
+        if (!normalizedFullName) {
+            return { success: false, message: "Nama Lengkap tidak boleh kosong." };
+        }
+        const userRef = db.collection("users").doc(normalizedFullName);
+        const doc = await userRef.get();
+        if (doc.exists) {
+            return { success: false, message: "Nama guru ini sudah terdaftar." };
+        }
+        
+        const maxXP = 100;
+        const maxLevel = Math.floor(maxXP / XP_PER_LEVEL) + 1;
+        const allChapters = CHAPTERS.map(c => c.id);
+        const fullQuizStats = {};
+        CHAPTERS.forEach(chapter => {
+            const quizBlock = chapter.content.find(b => b.type === 'quiz');
+            if (quizBlock) {
+                const quizId = quizBlock.data.id;
+                const maxQuizXP = quizBlock.data.questions.length * XP_BENAR;
+                fullQuizStats[quizId] = { completed: true, xpEarned: maxQuizXP, score: 100 };
+            }
+        });
+
+        const teacherState = {
+            xp: maxXP,
+            level: maxLevel,
+            badges: [],
+            completedChapters: allChapters,
+            quizStats: fullQuizStats,
+        };
+
+        const newTeacher = {
+            fullName: fullName.trim(),
+            kelas: "Guru",
+            sekolah,
+            password, 
+            gameState: teacherState,
+            createdAt: new Date(),
+            isTeacher: true,
+        };
+        await userRef.set(newTeacher);
+        handleLoginSuccess(newTeacher);
+        return { success: true };
+    };
+
+    const login = async (fullName, password) => {
+        const normalizedFullName = fullName.trim().toLowerCase();
+        const userRef = db.collection("users").doc(normalizedFullName);
+        const doc = await userRef.get();
+        if (!doc.exists) {
+            return { success: false, message: "Pengguna tidak ditemukan." };
+        }
+        const userData = doc.data();
+        if (userData.password !== password) {
+            return { success: false, message: "Sandi salah." };
+        }
+        handleLoginSuccess(userData);
+        return { success: true };
+    };
+
+    const logout = () => {
+        setCurrentUser(null);
+        setGameState(null);
+        sessionStorage.removeItem('loggedInUserKey');
+    };
+    
+    const completeChapter = useCallback((chapterId) => {
+        setGameState(prev => {
+          if (!prev || prev.completedChapters.includes(chapterId)) return prev;
+          const updatedChapters = [...prev.completedChapters, chapterId];
+          return { ...prev, completedChapters: updatedChapters };
+        });
+    }, []);
+    
+    const updateQuizStats = useCallback((quizId, stats) => {
+        const { xpEarned } = stats;
+        setGameState(prev => {
+            if (!prev) return null;
+            const newXp = prev.xp + xpEarned;
+            const newLevel = Math.floor(newXp / XP_PER_LEVEL) + 1;
+            const newStats = { ...prev.quizStats, [quizId]: { ...prev.quizStats[quizId], ...stats } };
+            return { ...prev, xp: newXp, level: newLevel, quizStats: newStats };
+        });
+    }, []);
+
+    const value = { currentUser, gameState, isLoading, login, register, registerAsTeacher, logout, completeChapter, updateQuizStats };
+
+    return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
+};
+
+const useAppContext = () => {
+    const context = useContext(AppContext);
+    if (context === undefined) throw new Error('useAppContext must be used within an AppProvider');
+    return context;
+};
+
+const useOnScreen = (ref, options = { threshold: 0.1, triggerOnce: true }) => {
+    const [isIntersecting, setIntersecting] = useState(false);
+    useEffect(() => {
+        const observer = new IntersectionObserver(([entry]) => {
+            if (entry.isIntersecting) {
+                setIntersecting(true);
+                if (options.triggerOnce) observer.unobserve(entry.target);
+            }
+        }, options);
+        const currentRef = ref.current;
+        if (currentRef) observer.observe(currentRef);
+        return () => { if (currentRef) observer.unobserve(currentRef); };
+    }, [ref, options]);
+    return isIntersecting;
+};
+
+// --- KOMPONEN-KOMPONEN UI ---
+const FluidPopup = ({ isOpen, onClose, triggerRef, children }) => {
+  const [isMounted, setIsMounted] = useState(false);
+  const [styles, setStyles] = useState({});
+  const [contentClass, setContentClass] = useState('');
+  useEffect(() => {
+    if (isOpen) {
+      setIsMounted(true);
+      const rect = triggerRef.current?.getBoundingClientRect(); if (!rect) return;
+      setStyles({ position: 'fixed', top: `${rect.top}px`, left: `${rect.left}px`, width: `${rect.width}px`, height: `${rect.height}px`, margin: 0, opacity: 0 });
+      setContentClass('opacity-0');
+      requestAnimationFrame(() => {
+        setStyles({ position: 'fixed', top: '50%', left: '50%', width: 'auto', height: 'auto', transform: 'translate(-50%, -50%)', margin: 0, opacity: 1 });
+        setContentClass('opacity-100 transition-opacity duration-200 delay-150');
+      });
+    } else if (isMounted) {
+      const rect = triggerRef.current?.getBoundingClientRect();
+      if (!rect) { setIsMounted(false); return; };
+      setContentClass('opacity-0 transition-opacity duration-150');
+      setStyles(prev => ({ ...prev, top: `${rect.top}px`, left: `${rect.left}px`, width: `${rect.width}px`, height: `${rect.height}px`, transform: 'none', opacity: 0 }));
+      setTimeout(() => setIsMounted(false), 300);
+    }
+  }, [isOpen, triggerRef, isMounted]);
+  if (!isMounted) return null;
+  return ReactDOM.createPortal(
+    <>
+      <div className={`fixed inset-0 bg-slate-900/40 backdrop-blur-[4px] z-[100] transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} onClick={onClose} aria-hidden="true"/>
+      <div className="fixed z-[110] flex items-center justify-center transition-[width,height,top,left,opacity] duration-300 cubic-bezier(0.4, 0, 0.2, 1)" style={styles} onClick={e => e.stopPropagation()} role="dialog" aria-modal="true">
+        <div className={contentClass}>{children}</div>
+      </div>
+    </>, document.body
+  );
+};
+
+const Chatbot = ({ currentChapterId, onClose }) => {
+  const [messages, setMessages] = useState([]);
+  const [currentQuestions, setCurrentQuestions] = useState([]);
+  const [history, setHistory] = useState([]);
+  const messagesEndRef = useRef(null);
+  const mainQuestions = useMemo(() => currentChapterId !== null && COMPREHENSIVE_CHATBOT_DATA[currentChapterId] ? COMPREHENSIVE_CHATBOT_DATA[currentChapterId] : COMPREHENSIVE_CHATBOT_DATA.general, [currentChapterId]);
+  useEffect(() => { setMessages([{ sender: 'bot', text: "Salam! Saya Pustakawan Kuno. Pilih pertanyaan di bawah untuk memulai." }]); setCurrentQuestions(mainQuestions); setHistory([]); }, [mainQuestions]);
+  useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
+  const handleQuestionSelect = (questionNode) => {
+    setMessages(prev => [...prev, { sender: 'user', text: questionNode.question }, { sender: 'bot', text: questionNode.answer, imgSrc: questionNode.imgSrc }]);
+    if (questionNode.followUp?.length > 0) { setHistory(prev => [...prev, currentQuestions]); setCurrentQuestions(questionNode.followUp); }
+};
+  const handleBack = () => { const lastState = history[history.length - 1]; if(lastState) { setCurrentQuestions(lastState); setHistory(prev => prev.slice(0, -1)); } };
+  return (
+    <div className="glass-panel rounded-3xl w-[22rem] h-[38rem] max-w-xs max-h-[80vh] flex flex-col shadow-[0_20px_50px_rgba(8,_112,_184,_0.1)] overflow-hidden">
+      <header className="flex justify-between items-center p-4 bg-white/80 dark:bg-slate-800/80 backdrop-blur-md text-emerald-800 dark:text-white flex-shrink-0 border-b border-slate-100 dark:border-slate-700">
+        <div className="flex items-center gap-2">
+            <div className="p-1.5 bg-emerald-50 dark:bg-emerald-900/50 rounded-full text-emerald-600"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg></div>
+            <h2 className="text-sm font-bold tracking-tight">Pustakawan</h2>
+        </div>
+        <button onClick={onClose} className="text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700" aria-label="Tutup Chatbot">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </header>
+      <main className="flex-grow p-4 overflow-y-auto bg-white/50 dark:bg-slate-900/50 scrollbar-thin">
+        <div className="flex flex-col gap-3">
+          {messages.map((msg, index) => (
+            <div key={index} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+                <div className={`max-w-[85%] px-4 py-3 text-xs leading-relaxed shadow-sm ${msg.sender === 'user' ? 'bg-emerald-800 text-white rounded-2xl rounded-br-none' : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-2xl rounded-bl-none border border-slate-100 dark:border-slate-700'}`}>
+                    <p className="whitespace-pre-wrap">{msg.text}</p>
+                    {msg.imgSrc && <img src={msg.imgSrc} alt="Gambar chatbot" className="mt-2 rounded-lg w-full" />}
+                </div>
+            </div>
+          ))}
+          <div ref={messagesEndRef} />
+        </div>
+      </main>
+      <footer className="p-3 border-t border-slate-100 dark:border-slate-700 bg-white/90 dark:bg-slate-800/90 flex-shrink-0 backdrop-blur-md">
+        <div className="flex flex-col gap-2 max-h-40 overflow-y-auto scrollbar-thin pr-1">
+            {currentQuestions.map(q => ( <button key={q.id} onClick={() => handleQuestionSelect(q)} className="w-full text-left px-3 py-2.5 bg-slate-50 hover:bg-white dark:bg-slate-700/50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:border-emerald-300 dark:hover:border-emerald-500 hover:shadow-sm font-medium rounded-xl text-[11px] transition-all">{q.question}</button> ))}
+            {history.length > 0 && ( <button onClick={handleBack} className="w-full flex items-center justify-center gap-2 p-2 text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 text-[10px] font-bold uppercase tracking-widest transition-colors mt-1">Kembali</button> )}
+        </div>
+      </footer>
+    </div>
+  );
+};
+
+const GLOSSARY_TERMS = { 
+    "Adat": "Hukum atau aturan tradisional yang tidak tertulis namun dijunjung tinggi oleh suatu masyarakat.",
+    "Adagium": "Sebuah pepatah atau peribahasa yang mengandung prinsip atau kebenaran umum.",
+    "Akulturasi": "Proses percampuran dua kebudayaan atau lebih yang saling bertemu dan saling memengaruhi, tanpa menghilangkan budaya asli.", 
+    "Bid'ah": "Inovasi atau praktik baru dalam agama yang tidak ada contohnya dari zaman Nabi Muhammad.",
+    "Dakwah": "Kegiatan yang bersifat menyeru, mengajak dan memanggil orang untuk beriman dan taat kepada Allah sesuai dengan garis akidah, syari'at dan akhlak Islam.", 
+    "Dar al-Islam": "Secara harfiah 'Negeri Islam', merujuk pada wilayah di dunia di mana hukum Islam berlaku dan umat Muslim dapat menjalankan agamanya dengan aman.",
+    "Dialektika": "Proses diskusi dan argumentasi untuk menyelesaikan perbedaan pendapat; dalam sejarah, merujuk pada interaksi antara kekuatan yang bertentangan yang menghasilkan sintesis baru.",
+    "Dirham": "Mata uang, khususnya koin emas atau perak, yang digunakan di banyak negara Muslim pada masa lampau, termasuk di Samudra Pasai.",
+    "Emporium": "Pusat perdagangan besar yang dikunjungi oleh pedagang dari berbagai penjuru dunia.",
+    "Faraidh": "Ilmu hukum waris dalam Islam yang mengatur pembagian harta peninggalan.",
+    "Fuqaha": "Jamak dari 'faqih', yaitu seorang ahli dalam ilmu fikih atau hukum Islam.",
+    "Hikayat": "Karya sastra Melayu lama yang berisi cerita, riwayat, atau biografi, seringkali bersifat historis atau legendaris.",
+    "Kesultanan": "Bentuk pemerintahan yang dikepalai oleh seorang Sultan; kerajaan Islam.", 
+    "Kitabullah": "Kitab Allah, yaitu Al-Qur'an.",
+    "Kosmopolitan": "Sifat suatu kota atau masyarakat yang penduduknya berasal dari berbagai negara atau budaya, bersifat internasional.",
+    "Matrilineal": "Sistem kekerabatan yang menarik garis keturunan dari pihak ibu.", 
+    "Mazhab Syafi'i": "Salah satu dari empat mazhab fikih (hukum Islam) dalam Islam Sunni yang paling banyak dianut di Asia Tenggara.", 
+    "Nusantara": "Istilah untuk menyebut wilayah kepulauan Asia Tenggara, khususnya Indonesia, Malaysia, dan sekitarnya.", 
+    "Ortodoksi": "Kepatuhan yang ketat terhadap ajaran atau kepercayaan yang dianggap benar atau lurus.",
+    "Puritan": "Merujuk pada kelompok yang menginginkan pemurnian ajaran agama dari praktik-praktik yang dianggap tidak murni atau menyimpang.",
+    "Sintesis": "Paduan atau gabungan dari berbagai pengertian atau hal sehingga menjadi satu kesatuan yang selaras.",
+    "Sufi": "Sebutan untuk orang yang mendalami sufisme atau tasawuf, yaitu ajaran untuk mengenal dan mendekatkan diri kepada Tuhan.", 
+    "Syarak": "Hukum Islam yang bersumber dari Al-Qur'an dan Sunnah; syariat.",
+    "Syaikhul Islam": "Gelar kehormatan tertinggi bagi ulama paling terkemuka yang menjabat sebagai penasihat keagamaan utama bagi Sultan.",
+    "Syekh": "Gelar kehormatan dalam Islam untuk seorang ulama, guru spiritual, atau pemimpin suku.",
+    "Talasokrasi": "Sebuah negara atau kerajaan yang kekuatan utamanya berbasis pada kekuatan maritim (laut).",
+    "Tarekat": "Jalan atau metode spiritual dalam tradisi sufi untuk mendekatkan diri kepada Tuhan.",
+    "Ulama": "Orang yang ahli dalam hal atau dalam pengetahuan agama Islam.",
+    "Uleebalang": "Gelar bagi bangsawan atau hulubalang di Aceh yang memimpin sebuah daerah (nanggroe).",
+    "Wahabisme": "Gerakan pemurnian Islam yang didirikan oleh Muhammad ibn Abd al-Wahhab di Arab pada abad ke-18, menekankan pada penolakan terhadap praktik yang dianggap bid'ah."
+};
+const POPUP_WIDTH = 260; const SCREEN_PADDING = 20;
+const GlossaryPopup = ({ text }) => {
+  const [popup, setPopup] = useState(null); const spanRefs = useRef({});
+  const handleMouseEnter = (term, key) => { const ref = spanRefs.current[key]; if (ref) { const rect = ref.getBoundingClientRect(); const scrollY = window.scrollY; let left = rect.left + rect.width / 2; const top = rect.top + scrollY - 8; const halfPopupWidth = POPUP_WIDTH / 2; if (left - halfPopupWidth < SCREEN_PADDING) left = SCREEN_PADDING + halfPopupWidth; else if (left + halfPopupWidth > window.innerWidth - SCREEN_PADDING) left = window.innerWidth - SCREEN_PADDING - halfPopupWidth; setPopup({ content: GLOSSARY_TERMS[term], top, left }); } };
+  const handleMouseLeave = () => setPopup(null);
+  const renderText = () => { const regex = new RegExp(`\\b(${Object.keys(GLOSSARY_TERMS).join('|')})\\b`, 'gi'); return text.split(regex).map((part, index) => { const normalizedPart = Object.keys(GLOSSARY_TERMS).find(k => k.toLowerCase() === part.toLowerCase()); if (normalizedPart) { const uniqueKey = `${normalizedPart}-${index}`; return <span key={uniqueKey} ref={el => spanRefs.current[uniqueKey] = el} onMouseEnter={() => handleMouseEnter(normalizedPart, uniqueKey)} onMouseLeave={handleMouseLeave} className="text-emerald-700 dark:text-emerald-400 font-bold border-b border-emerald-300 dark:border-emerald-700 border-dashed cursor-help hover:bg-emerald-50 dark:hover:bg-emerald-900/50 transition-colors rounded px-0.5">{part}</span>; } return <span key={`text-${index}`}>{part}</span>; }); };
+  return <p className="text-justify mb-3 font-serif text-[11px] leading-[1.6] text-slate-700 dark:text-slate-300">{renderText()}{popup && ReactDOM.createPortal(<div className="glass-panel absolute z-50 p-4 text-slate-700 dark:text-slate-200 text-xs rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.1)] max-w-xs transform -translate-x-1/2 -translate-y-full tooltip-caret" style={{ top: popup.top, left: popup.left, width: `${POPUP_WIDTH}px` }}><h5 className="font-bold text-emerald-700 dark:text-emerald-400 mb-1.5 font-sans uppercase tracking-wider text-[10px]">{Object.keys(GLOSSARY_TERMS).find(k => GLOSSARY_TERMS[k] === popup.content)}</h5>{popup.content}</div>, document.body)}</p>;
+};
+
+const Timeline = ({ data }) => {
+  const sortedData = useMemo(() => {
+    const isStepBased = data.some(d => d.year.toString().startsWith('Langkah'));
+    if (isStepBased) {
+      return [...data].sort((a, b) => {
+        const numA = parseInt(a.year.replace('Langkah ', ''), 10);
+        const numB = parseInt(b.year.replace('Langkah ', ''), 10);
+        return numA - numB;
+      });
+    }
+    return [...data].sort((a, b) => parseInt(a.year) - parseInt(b.year));
+  }, [data]);
+  
+  return (
+    <div className="my-16 relative px-4">
+       {/* Responsive vertical line: centered on desktop, left-aligned on mobile */}
+       <div className="absolute top-0 bottom-0 left-6 md:left-1/2 w-px bg-gradient-to-b from-transparent via-emerald-200 dark:via-emerald-900 to-transparent"></div>
+       
+       <h3 className="text-xl font-bold text-emerald-900 dark:text-white mb-12 text-center relative z-10">
+         <span className="bg-white dark:bg-slate-800 px-6 py-2 rounded-full shadow-sm border border-slate-100 dark:border-slate-700">Linimasa Penting</span>
+       </h3>
+       
+       <div className="space-y-8 md:space-y-12 relative">
+            {sortedData.map((event, index) => {
+                const itemRef = useRef(null);
+                const isVisible = useOnScreen(itemRef, { threshold: 0.2 });
+                const isLeft = index % 2 === 0;
+                
+                return(
+                    <div key={index} ref={itemRef} className={`flex flex-col md:flex-row items-center justify-between w-full animate-on-scroll ${isVisible ? 'is-visible' : ''} ${isLeft ? 'md:flex-row-reverse' : ''}`} style={{ transitionDelay: `${index * 100}ms`}}>
+                        {/* Spacer for desktop layout */}
+                        <div className="hidden md:block w-5/12"></div>
+                        
+                        {/* Dot indicator */}
+                        <div className="absolute left-2 md:static md:order-1 z-20 flex items-center justify-center w-6 h-6 md:w-8 md:h-8 rounded-full bg-emerald-50 dark:bg-slate-900 border-2 md:border-4 border-white dark:border-slate-800 ring-1 ring-emerald-500/30">
+                            <div className="w-1.5 h-1.5 md:w-2 md:h-2 bg-emerald-500 rounded-full"></div>
+                        </div>
+                        
+                        {/* Content Card */}
+                        <div className="w-full pl-10 md:pl-0 md:w-5/12 md:order-1">
+                             <div className={`bg-white dark:bg-slate-800/50 p-3 md:p-6 rounded-2xl shadow-[0_2px_10px_rgb(0,0,0,0.03)] border border-slate-100 dark:border-slate-700 hover:shadow-md transition-all ${isLeft ? 'md:text-right' : 'md:text-left'} text-left`}>
+                                <span className="inline-block px-2.5 py-1 rounded-md bg-emerald-50/50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold tracking-widest uppercase mb-2">{event.year}</span>
+                                <h4 className="text-sm md:text-lg font-bold text-emerald-900 dark:text-white mb-2 leading-tight">{event.title}</h4>
+                                <p className="text-slate-500 dark:text-slate-400 leading-relaxed text-xs">{event.longDescription}</p>
+                            </div>
+                        </div>
+                    </div>
+                );
+            })}
+       </div>
+    </div>
+  );
+};
+
+const LegacyExplorer = ({ data }) => {
+  const [expandedId, setExpandedId] = useState(null);
+  if (!data?.items?.length) return <div className="my-12 text-center text-gray-500">Konten tidak tersedia.</div>;
+  const handleToggle = (id) => setExpandedId(prevId => (prevId === id ? null : id));
+  return (
+    <div className="my-12">
+      <h3 className="text-xl font-bold text-emerald-900 dark:text-white mb-6 text-center">{data.title}</h3>
+      <div className="grid gap-3">
+        {data.items.map((item) => (
+          <div key={item.id} className="bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 overflow-hidden transition-all hover:border-emerald-200 dark:hover:border-emerald-800">
+            <button onClick={() => handleToggle(item.id)} className="w-full flex justify-between items-center text-left p-4 bg-transparent hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors group">
+              <h4 className="text-sm font-bold text-emerald-800 dark:text-slate-200 flex items-center gap-3 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                 <span className={`w-1.5 h-1.5 rounded-full transition-colors ${expandedId === item.id ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-600'}`}></span>
+                 {item.name}
+              </h4>
+              <span className={`transform transition-transform duration-300 text-slate-400 ${expandedId === item.id ? 'rotate-180 text-emerald-500' : ''}`}>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+              </span>
+            </button>
+            <div className={`grid transition-all duration-500 ease-[cubic-bezier(0.33,1,0.68,1)] ${expandedId === item.id ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
+                <div className="overflow-hidden">
+                    <div className="p-5 pt-0 bg-slate-50/30 dark:bg-slate-900/10">
+                        {item.imgSrc && <img src={item.imgSrc} alt={item.name} className="w-full h-48 object-cover rounded-lg mb-4 shadow-sm" />}
+                        <p className="text-slate-600 dark:text-slate-300 leading-relaxed text-xs text-justify">{item.description}</p>
+                    </div>
+                </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const InteractiveStructure = ({ data }) => {
+    const [selectedItemId, setSelectedItemId] = useState(null);
+    const handleItemClick = (itemId) => setSelectedItemId(currentItemId => currentItemId === itemId ? null : itemId);
+    return (
+        <div className="my-12">
+            <h3 className="text-xl font-bold text-emerald-900 dark:text-white mb-6 text-center">{data.title}</h3>
+            <div className="grid gap-3 sm:grid-cols-2">
+                {data.items.map(item => (
+                    <div key={item.id} className={`bg-white dark:bg-slate-800 rounded-2xl border transition-all duration-300 ${selectedItemId === item.id ? 'col-span-full border-emerald-200 dark:border-emerald-800 shadow-sm bg-emerald-50/30 dark:bg-emerald-900/10' : 'border-slate-100 dark:border-slate-700 hover:border-emerald-100 dark:hover:border-emerald-900'}`}>
+                        <button onClick={() => handleItemClick(item.id)} className="w-full flex items-center justify-between text-left p-4 transition-colors">
+                            <div className="flex items-center gap-3">
+                                <span className="text-xl bg-white dark:bg-slate-700 p-2 rounded-lg shadow-sm border border-slate-100 dark:border-slate-600">{item.icon}</span>
+                                <h4 className="text-sm font-bold text-emerald-800 dark:text-slate-200">{item.title}</h4>
+                            </div>
+                            {selectedItemId === item.id && <span className="text-xs text-emerald-600 font-semibold bg-white dark:bg-slate-900 px-2 py-1 rounded-md shadow-sm">Aktif</span>}
+                        </button>
+                        {selectedItemId === item.id && (
+                            <div className="px-4 pb-5 animate-slideUp">
+                                <div className="h-px w-full bg-slate-200 dark:bg-slate-700/50 mb-4"></div>
+                                {item.imgSrc && <img src={item.imgSrc} alt={item.title} className="w-full h-48 object-cover rounded-xl mb-4 shadow-sm" />}
+                                <p className="text-slate-600 dark:text-slate-300 text-xs leading-relaxed text-justify">{item.description}</p>
+                            </div>
+                        )}
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+};
+
+const ConfettiPiece = ({ id }) => {
+    const style = {
+      left: `${Math.random() * 100}%`,
+      animationDuration: `${Math.random() * 2 + 3}s`,
+      animationDelay: `${Math.random() * 2}s`,
+      backgroundColor: ['#f44336', '#e91e63', '#9c27b0', '#673ab7', '#3f51b5', '#2196f3', '#03a9f4', '#00bcd4', '#009688', '#4caf50', '#8bc34a', '#cddc39', '#ffeb3b', '#ffc107', '#ff9800'][Math.floor(Math.random() * 15)]
+    };
+    return <div key={id} className="confetti-piece" style={style}></div>;
+};
+
+const Confetti = () => (
+    <div aria-hidden="true" className="confetti-container">
+        {[...Array(50)].map((_, i) => <ConfettiPiece key={i} id={i} />)}
+        <style>{`
+          .confetti-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; overflow: hidden; z-index: 10; }
+          .confetti-piece { position: absolute; width: 6px; height: 12px; opacity: 0; animation: confetti-fall 5s ease-out forwards; }
+          @keyframes confetti-fall {
+            0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+          }
+        `}</style>
+    </div>
+);
+
+const Quiz = ({ data, onQuizFinish }) => {
+    const { updateQuizStats, gameState } = useAppContext();
+    const [answers, setAnswers] = useState({});
+    const isFinished = gameState.quizStats[data.id]?.completed || false;
+    const [showResult, setShowResult] = useState(isFinished);
+
+    const getGrade = (xpEarned, totalQuestions) => {
+        const maxXP = totalQuestions * XP_BENAR;
+        const percentage = maxXP > 0 ? (xpEarned / maxXP) * 100 : 0;
+        if (percentage >= 90) return 'A+';
+        if (percentage >= 80) return 'A';
+        if (percentage >= 70) return 'B';
+        if (percentage >= 60) return 'C';
+        if (percentage >= 40) return 'D';
+        return 'E';
+    };
+
+    const handleAnswerSelect = (questionIndex, answerIndex) => {
+        setAnswers(prev => ({ ...prev, [questionIndex]: answerIndex }));
+    };
+
+    const handleSubmitQuiz = () => {
+        if (isFinished) return;
+        let xpEarned = 0;
+        let correctCount = 0;
+        data.questions.forEach((q, index) => {
+            if (answers[index] === q.correctAnswer) {
+                xpEarned += q.xp;
+                correctCount++;
+            }
+        });
+        if (xpEarned === 0 && Object.keys(answers).length === data.questions.length) xpEarned = XP_MINIMUM_PER_BAB;
+        const percentage = data.questions.length > 0 ? ((correctCount / data.questions.length) * 100) : 0;
+        updateQuizStats(data.id, { completed: true, xpEarned: xpEarned, score: percentage });
+        onQuizFinish();
+        setShowResult(true);
+    };
+
+    const allQuestionsAnswered = Object.keys(answers).length === data.questions.length;
+
+    if (showResult) {
+        const quizResult = gameState.quizStats[data.id];
+        const earnedXP = quizResult?.xpEarned || 0;
+        const grade = getGrade(earnedXP, data.questions.length);
+        return (
+            <div className="my-10 p-10 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-[0_20px_60px_-10px_rgba(0,0,0,0.05)] rounded-3xl text-center relative overflow-hidden animate-popIn">
+                <Confetti />
+                <div className="relative z-10">
+                    <div className="w-16 h-16 bg-emerald-50 dark:bg-emerald-900/30 rounded-2xl flex items-center justify-center mx-auto mb-6 ring-1 ring-emerald-100 dark:ring-emerald-800">
+                        <svg className="w-8 h-8 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
+                    <h3 className="text-2xl font-bold text-slate-800 dark:text-white mb-2">Kuis Selesai</h3>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mb-8">Pencapaian akademik Anda untuk bab ini.</p>
+                    <div className="flex justify-center gap-4">
+                        <div className="bg-slate-50 dark:bg-slate-900/50 py-4 px-6 rounded-2xl border border-slate-100 dark:border-slate-700 min-w-[100px]">
+                            <p className="text-3xl font-extrabold text-emerald-600 dark:text-emerald-400">+{earnedXP}</p>
+                            <p className="text-[10px] uppercase tracking-widest font-bold text-slate-400 mt-1">XP</p>
+                        </div>
+                        <div className="bg-slate-50 dark:bg-slate-900/50 py-4 px-6 rounded-2xl border border-slate-100 dark:border-slate-700 min-w-[100px]">
+                            <p className="text-3xl font-extrabold text-slate-800 dark:text-white">{grade}</p>
+                            <p className="text-[10px] uppercase tracking-widest font-bold text-slate-400 mt-1">Grade</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+    
+    return (
+        <div className="my-10 p-8 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-[0_8px_30px_rgba(0,0,0,0.04)] rounded-3xl">
+            <h3 className="text-xl font-bold text-emerald-900 dark:text-white mb-8 flex items-center gap-3">
+                <span className="w-1 h-6 bg-emerald-500 rounded-full"></span>
+                {data.title}
+            </h3>
+            <div className="space-y-6">
+                {data.questions.map((q, qIndex) => (
+                    <div key={qIndex} className="p-1">
+                        <p className="text-slate-700 dark:text-slate-200 mb-4 font-bold text-sm leading-relaxed">{qIndex + 1}. {q.question}</p>
+                        <div className="grid gap-2">
+                            {q.options.map((option, oIndex) => (
+                                <button
+                                    key={oIndex}
+                                    onClick={() => handleAnswerSelect(qIndex, oIndex)}
+                                    className={`w-full relative z-10 text-left px-4 py-3.5 rounded-xl transition-all duration-200 text-xs font-medium border flex items-center gap-3 group ${
+                                        answers[qIndex] === oIndex
+                                            ? 'bg-emerald-600 text-white border-emerald-600 shadow-lg shadow-emerald-200 dark:shadow-none translate-x-1'
+                                            : 'bg-slate-50 dark:bg-slate-700/30 hover:bg-white dark:hover:bg-slate-700 border-transparent hover:border-slate-200 dark:hover:border-slate-600 text-slate-600 dark:text-slate-300'
+                                    }`}
+                                >
+                                    <div className={`w-4 h-4 rounded-full border flex items-center justify-center flex-shrink-0 transition-colors ${
+                                        answers[qIndex] === oIndex ? 'border-white bg-white' : 'border-slate-300 dark:border-slate-500 group-hover:border-emerald-400'
+                                    }`}>
+                                        {answers[qIndex] === oIndex && <div className="w-2 h-2 rounded-full bg-emerald-600"></div>}
+                                    </div>
+                                    <span className="leading-relaxed">{option}</span>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                ))}
+            </div>
+            <div className="mt-8 pt-6 border-t border-slate-50 dark:border-slate-700/50">
+                <button
+                    onClick={handleSubmitQuiz}
+                    disabled={!allQuestionsAnswered}
+                    className="w-full relative z-10 bg-emerald-800 hover:bg-emerald-700 dark:bg-white dark:hover:bg-slate-200 text-white dark:text-emerald-900 font-bold py-4 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                >
+                    Selesai & Lihat Hasil
+                </button>
+            </div>
+        </div>
+    );
+};
+
+const AudioContext = createContext(null);
+
+const AudioProvider = ({ children, fileSrc }) => {
+    const [isPlaying, setIsPlaying] = useState(false);
+    const audioRef = useRef(null);
+    useEffect(() => {
+        if (!audioRef.current) { audioRef.current = new Audio(fileSrc); audioRef.current.loop = true; }
+        const audio = audioRef.current;
+        let isPlayingOnMount = false;
+        const attemptPlay = () => { audio.play().then(() => { setIsPlaying(true); isPlayingOnMount = true; }).catch(e => { setIsPlaying(false); document.body.addEventListener('click', handleFirstPlay, { once: true }); }); };
+        const handleFirstPlay = () => { if (!isPlayingOnMount) { audio.play().then(() => setIsPlaying(true)); } };
+        attemptPlay();
+        return () => { audio.pause(); document.body.removeEventListener('click', handleFirstPlay); };
+    }, [fileSrc]);
+    const togglePlay = () => { if (isPlaying) { audioRef.current.pause(); setIsPlaying(false); } else { audioRef.current.play(); setIsPlaying(true); } };
+    return <AudioContext.Provider value={{ isPlaying, togglePlay }}>{children}</AudioContext.Provider>;
+};
+
+const ActionMenu = ({ 
+    isDarkMode, 
+    toggleDarkMode, 
+    onChatbotToggle, 
+    onInfo, 
+    onLeaderboard, 
+    onProfile, 
+    onLogout, 
+    triggerRef 
+}) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const { isPlaying, togglePlay } = useContext(AudioContext);
+    const menuRef = useRef(null);
+    useEffect(() => { const handleClickOutside = (event) => { if (menuRef.current && !menuRef.current.contains(event.target)) setIsOpen(false); }; document.addEventListener("mousedown", handleClickOutside); return () => document.removeEventListener("mousedown", handleClickOutside); }, [menuRef]);
+    
+    // Items are rendered bottom-to-top due to flex-col-reverse.
+    // Order in array: 
+    // [0] -> Visual Bottom (nearest to FAB)
+    // [Last] -> Visual Top (furthest from FAB)
+    const menuItems = [
+        { id: 'chatbot', action: () => { onChatbotToggle(); setIsOpen(false); }, icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>, label: 'Asisten' },
+        { id: 'music', action: togglePlay, icon: isPlaying ? <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> : <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>, label: isPlaying ? 'Pause' : 'Play' },
+        { id: 'dark-mode', action: () => { toggleDarkMode(); setIsOpen(false); }, icon: isDarkMode ? <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg> : <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>, label: isDarkMode ? 'Light' : 'Dark' },
+        { id: 'info', action: () => { onInfo(); setIsOpen(false); }, icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>, label: 'Info' },
+        { id: 'leaderboard', action: () => { onLeaderboard(); setIsOpen(false); }, icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>, label: 'Peringkat' },
+        { id: 'profile', action: () => { onProfile(); setIsOpen(false); }, icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>, label: 'Profil' },
+        { id: 'logout', action: () => { onLogout(); setIsOpen(false); }, icon: <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>, label: 'Keluar' }
+    ];
+
+    return (
+        <div ref={menuRef} className="fixed bottom-8 right-8 z-40 flex flex-col items-end pointer-events-none">
+            <div className={`flex flex-col-reverse items-end gap-3 mb-4 transition-all duration-300 ${isOpen ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}`}>
+                 {menuItems.map((item, index) => (
+                    <div key={item.id} className="flex items-center gap-3">
+                        <span className={`bg-white dark:bg-slate-800 text-emerald-800 dark:text-slate-300 text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-lg shadow-sm border border-slate-100 dark:border-slate-700 opacity-0 transition-opacity duration-200 pointer-events-auto ${isOpen ? 'opacity-100' : ''}`}>{item.label}</span>
+                        <button onClick={item.action} className="w-10 h-10 bg-white dark:bg-slate-800 rounded-full shadow-[0_4px_12px_rgba(0,0,0,0.08)] flex items-center justify-center text-emerald-800 dark:text-slate-200 border border-slate-50 dark:border-slate-700 hover:scale-105 active:scale-95 pointer-events-auto transition-transform" style={{ transitionDelay: isOpen ? `${index * 30}ms` : '0ms' }} aria-label={item.label}>{item.icon}</button>
+                    </div>
+                ))}
+            </div>
+            <button ref={triggerRef} onClick={() => setIsOpen(prev => !prev)} className="bg-emerald-800 hover:bg-emerald-700 dark:bg-white text-white dark:text-slate-900 w-14 h-14 rounded-full shadow-xl flex items-center justify-center hover:scale-105 active:scale-95 z-50 pointer-events-auto transition-transform" aria-label="Menu" aria-expanded={isOpen}>
+                <div className={`transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${isOpen ? 'rotate-45' : ''}`}><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg></div>
+            </button>
+        </div>
+    );
+};
+
+const TeacherLoginModal = ({ onClose, onSuccess }) => {
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
+    const [name, setName] = useState('');
+    const [sekolah, setSekolah] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const handleSubmit = async () => { setIsSubmitting(true); setError(''); const result = await onSuccess(name, sekolah, password); if (result && !result.success) { setError(result.message); } else { onClose(); } setIsSubmitting(false); };
+
+    return (
+        <div className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
+            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-8 max-w-md w-full border border-white/20" onClick={e => e.stopPropagation()}>
+                <h2 className="text-lg font-bold text-emerald-900 dark:text-white mb-6 text-center">Akses Pengajar</h2>
+                <div className="space-y-4">
+                    <input type="text" value={name} onChange={e => setName(e.target.value)} className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:border-emerald-500 outline-none" placeholder="Nama Lengkap" />
+                    <input type="text" value={sekolah} onChange={e => setSekolah(e.target.value)} className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:border-emerald-500 outline-none" placeholder="Asal Sekolah" />
+                    <input type="password" value={password} onChange={e => { setPassword(e.target.value); setError(''); }} className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:border-emerald-500 outline-none" placeholder="Kode Akses" />
+                    {error && <div className="text-red-500 text-xs text-center">{error}</div>}
+                </div>
+                <button onClick={handleSubmit} disabled={isSubmitting} className="mt-6 w-full bg-emerald-800 text-white font-bold py-3 rounded-xl text-sm hover:opacity-90 transition-opacity">{isSubmitting ? '...' : 'Masuk'}</button>
+            </div>
+        </div>
+    );
+};
+
+const LeaderboardModal = ({ isOpen, onClose }) => {
+    const { currentUser } = useAppContext();
+    const [leaders, setLeaders] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => { if (isOpen) { setLoading(true); db.collection("users").orderBy("gameState.xp", "desc").limit(20).get().then(snapshot => { const data = []; snapshot.forEach(doc => { data.push({ id: doc.id, ...doc.data() }); }); setLeaders(data); setLoading(false); }); } }, [isOpen]);
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-slate-900/30 backdrop-blur-[2px] z-50 flex items-center justify-center p-4" onClick={onClose}>
+            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-xl w-full flex flex-col overflow-hidden border border-white/50 animate-popIn max-h-[70vh]" onClick={e => e.stopPropagation()}>
+                <div className="p-4 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center">
+                    <h2 className="font-bold text-emerald-900 dark:text-white flex items-center gap-2 text-sm uppercase tracking-wide">Peringkat Kelas</h2>
+                    <button onClick={onClose} className="text-slate-400 hover:text-slate-800 text-lg leading-none">&times;</button>
+                </div>
+                <div className="flex-1 overflow-y-auto p-0 scrollbar-thin">
+                    {loading ? <div className="flex justify-center p-8"><div className="loader w-6 h-6 border-2"></div></div> : (
+                        <table className="w-full text-left text-sm">
+                            <thead className="bg-slate-50 dark:bg-slate-900 text-xs text-slate-500 uppercase sticky top-0 z-10"><tr><th className="py-3 px-4 font-semibold">#</th><th className="py-3 px-4 font-semibold">Siswa</th><th className="py-3 px-4 font-semibold text-right">XP</th></tr></thead>
+                            <tbody className="divide-y divide-slate-50 dark:divide-slate-700/50">
+                                {leaders.map((user, index) => {
+                                    const isMe = currentUser && user.fullName?.toLowerCase() === currentUser.fullName?.toLowerCase();
+                                    return (
+                                        <tr key={user.id} className={isMe ? 'bg-emerald-50/50 dark:bg-emerald-900/10' : ''}>
+                                            <td className="py-3 px-4 text-slate-400 w-12 text-center font-mono text-xs">{index + 1}</td>
+                                            <td className="py-3 px-4"><div className={`font-bold ${isMe ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-700 dark:text-slate-300'}`}>{user.fullName}</div><div className="text-[10px] text-slate-400">{user.sekolah}</div></td>
+                                            <td className="py-3 px-4 text-right font-mono font-bold text-slate-600 dark:text-slate-400">{user.gameState?.xp || 0}</td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const InfoModal = ({ isOpen, onClose }) => {
+    if (!isOpen) return null;
+    const developers = [
+        { name: "Ilham Danial Saputra", nim: "1403624069" },
+        { name: "Jeremy Trihartanto Rahardjo", nim: "1403624079" },
+        { name: "Faiq Alwi Effendi", nim: "1403624078" },
+        { name: "Fadhli Badiah Ramadhan Budianto", nim: "1403624072" }
+    ];
+
+    return (
+        <div className="fixed inset-0 bg-slate-900/30 backdrop-blur-[2px] z-50 flex items-center justify-center p-4" onClick={onClose}>
+            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-md w-full flex flex-col overflow-hidden border border-white/50 animate-popIn" onClick={e => e.stopPropagation()}>
+                <div className="p-4 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center">
+                    <h2 className="font-bold text-emerald-900 dark:text-white flex items-center gap-2 text-sm uppercase tracking-wide">Info Pengembang</h2>
+                    <button onClick={onClose} className="text-slate-400 hover:text-slate-800 text-lg leading-none">&times;</button>
+                </div>
+                <div className="p-6 space-y-6">
+                    <div className="space-y-3">
+                        {developers.map((dev, index) => (
+                            <div key={index} className="flex justify-between items-center text-sm border-b border-slate-50 dark:border-slate-700/50 pb-2 last:border-0 last:pb-0">
+                                <span className="font-semibold text-slate-700 dark:text-slate-200">{dev.name}</span>
+                                <span className="text-slate-400 font-mono text-xs">{dev.nim}</span>
+                            </div>
+                        ))}
+                    </div>
+                    <div className="text-center pt-4 border-t border-slate-100 dark:border-slate-700">
+                        <p className="font-bold text-emerald-800 dark:text-emerald-400 text-sm">Pendidikan Sejarah</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Universitas Negeri Jakarta</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const AuthScreen = () => {
+    const [isRegistering, setIsRegistering] = useState(false);
+    const [fullName, setFullName] = useState('');
+    const [kelas, setKelas] = useState('');
+    const [sekolah, setSekolah] = useState('');
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+    const [isTeacherModalOpen, setIsTeacherModalOpen] = useState(false);
+    const { login, register, registerAsTeacher } = useAppContext();
+
+    const handleSubmit = async (e) => {
+        e.preventDefault(); setIsLoading(true); setError('');
+        let result; if (isRegistering) result = await register(fullName, kelas, sekolah, password); else result = await login(fullName, password);
+        if (result && !result.success) setError(result.message); setIsLoading(false);
+    };
+    
+    return (
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-emerald-950 via-emerald-900 to-emerald-800 dark:bg-[#050505] p-6 relative">
+            <div className="relative z-10 w-full max-w-sm bg-white/90 dark:bg-black/40 backdrop-blur-xl p-8 rounded-[2rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] border border-white/20 dark:border-white/10">
+                <div className="text-center mb-8">
+                    <div className="w-12 h-12 bg-emerald-800 text-white rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-emerald-200 dark:shadow-none"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg></div>
+                    <h1 className="text-xl font-bold text-emerald-950 dark:text-white tracking-tight">{isRegistering ? 'Akun Baru' : 'Selamat Datang'}</h1>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Modul Sejarah Islamisasi Sumatra</p>
+                </div>
+                <form onSubmit={handleSubmit} className="space-y-3">
+                     <div><input type="text" value={fullName} onChange={e => setFullName(e.target.value)} className="w-full px-4 py-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-sm focus:border-emerald-500 outline-none transition-colors placeholder:text-slate-400" placeholder="Nama Lengkap" required /></div>
+                    {isRegistering && (
+                        <>
+                             <div><input type="text" value={kelas} onChange={e => setKelas(e.target.value)} className="w-full px-4 py-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-sm focus:border-emerald-500 outline-none transition-colors placeholder:text-slate-400" placeholder="Kelas" required /></div>
+                             <div><input type="text" value={sekolah} onChange={e => setSekolah(e.target.value)} className="w-full px-4 py-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-sm focus:border-emerald-500 outline-none transition-colors placeholder:text-slate-400" placeholder="Sekolah" required /></div>
+                        </>
+                    )}
+                    <div><input type="password" value={password} onChange={e => setPassword(e.target.value)} className="w-full px-4 py-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-sm focus:border-emerald-500 outline-none transition-colors placeholder:text-slate-400" placeholder="Sandi" required /></div>
+                    {error && <div className="text-red-500 text-xs text-center py-1">{error}</div>}
+                    <button type="submit" disabled={isLoading} className="w-full bg-emerald-800 hover:bg-emerald-900 text-white font-bold py-3.5 rounded-xl text-sm transition-all shadow-lg shadow-emerald-200/50 dark:shadow-none mt-2 disabled:opacity-70">{isLoading ? '...' : (isRegistering ? 'Daftar' : 'Masuk')}</button>
+                </form>
+                <div className="mt-6 text-center space-y-3">
+                    <button onClick={() => { setIsRegistering(!isRegistering); setError(''); }} className="text-xs text-slate-500 hover:text-slate-900 dark:hover:text-white font-medium transition-colors">{isRegistering ? 'Sudah punya akun? Login' : 'Belum punya akun? Daftar'}</button>
+                    <div className="text-[10px] text-slate-400 flex justify-center gap-3"><button onClick={() => setIsTeacherModalOpen(true)} className="hover:text-slate-600">Login Guru</button></div>
+                </div>
+            </div>
+            {isTeacherModalOpen && <TeacherLoginModal onClose={() => setIsTeacherModalOpen(false)} onSuccess={registerAsTeacher} />}
+        </div>
+    );
+};
+
+
+const ChapterCard = ({ chapter, onClick, isLocked, progress, style }) => {
+    return (
+        <div onClick={!isLocked ? onClick : undefined} 
+             className={`group relative p-6 rounded-[2rem] chapter-card border ${
+                 isLocked 
+                 ? 'bg-slate-50/50 dark:bg-slate-900 border-transparent opacity-60 cursor-not-allowed' 
+                 : 'glass-panel cursor-pointer hover:border-emerald-200/50 dark:hover:border-emerald-800'
+             }`}
+             style={style}
+        >
+            <div className="flex justify-between items-start mb-6">
+                <span className={`text-[10px] font-extrabold tracking-widest uppercase py-1.5 px-3 rounded-lg ${isLocked ? 'bg-slate-200 dark:bg-slate-800 text-slate-500' : 'bg-emerald-100 dark:bg-slate-700 text-emerald-800 dark:text-white'}`}>BAB {chapter.id}</span>
+                {!isLocked && (
+                    <div className={`w-2 h-2 rounded-full ${progress === 100 ? 'bg-emerald-500' : 'bg-slate-200 dark:bg-slate-600'}`}></div>
+                )}
+            </div>
+            <h3 className={`text-lg font-bold leading-tight mb-2 ${isLocked ? 'text-slate-400' : 'text-slate-800 dark:text-white'}`}>{chapter.title}</h3>
+            <p className="text-[11px] h-8 line-clamp-2 text-slate-500 dark:text-slate-400 leading-relaxed font-medium">{chapter.summary}</p>
+            
+            <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-700/50 flex items-center justify-between">
+                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{isLocked ? 'Terkunci' : 'Tersedia'}</span>
+                 {!isLocked && <svg className="w-4 h-4 text-emerald-600 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>}
+            </div>
+        </div>
+    );
+};
+
+const AnimatedContentBlock = ({ children, delay = 0 }) => {
+    const ref = useRef(null);
+    const isVisible = useOnScreen(ref);
+    return <div ref={ref} className={`animate-on-scroll ${isVisible ? 'is-visible' : ''}`} style={{ transitionDelay: `${delay}ms`}}>{children}</div>;
+};
+
+const ChapterView = ({ chapter, onClose, onGoToNext }) => {
+    const { completeChapter, gameState } = useAppContext();
+    const isCompleted = gameState.completedChapters.includes(chapter.id);
+    const quizData = chapter.content.find(b => b.type === 'quiz')?.data;
+    const [isQuizDone, setIsQuizDone] = useState(quizData ? gameState.quizStats[quizData.id]?.completed || false : true);
+
+    useEffect(() => { window.scrollTo(0, 0); }, [chapter.id]);
+    useEffect(() => { if (!isCompleted) completeChapter(chapter.id); }, [chapter.id, isCompleted, completeChapter]);
+
+    const renderContentBlock = (block, index) => {
+        const content = (() => {
+            switch (block.type) {
+                case 'heading': return <h2 className="text-2xl sm:text-3xl font-bold text-emerald-900 dark:text-white mt-12 mb-6 tracking-tight font-serif">{block.text}</h2>;
+                case 'subheading': return <h3 className="text-base font-bold text-emerald-800 dark:text-emerald-400 mt-8 mb-4 uppercase tracking-widest text-[10px] border-l-4 border-emerald-500 pl-3">{block.text}</h3>;
+                case 'paragraph': 
+                    // Updated typography for book-like feel on mobile
+                    return (
+                        <div className="prose-book mb-6">
+                             {block.text.split('\n\n').filter(p => p.trim() !== '').map((paragraphText, pIndex) => (
+                                <GlossaryPopup key={`${index}-${pIndex}`} text={paragraphText} />
+                            ))}
+                        </div>
+                    );
+                case 'image': 
+                    return (
+                        <figure className="my-8 rounded-xl overflow-hidden bg-slate-50 dark:bg-slate-900">
+                            <img src={block.src} alt={block.alt || block.caption} className="w-full h-auto max-h-[450px] object-cover" />
+                            {block.caption && <figcaption className="py-3 px-4 bg-slate-100 dark:bg-slate-800/50 text-center text-[10px] text-slate-500 font-bold uppercase tracking-widest">{block.caption}</figcaption>}
+                        </figure>
+                    );
+                case 'timeline': return <Timeline key={index} data={block.data} />;
+                case 'quiz': return <Quiz key={block.data.id} data={block.data} onQuizFinish={() => setIsQuizDone(true)} />;
+                case 'legacyExplorer': return <LegacyExplorer key={index} data={block.data} />;
+                case 'interactiveStructure': return <InteractiveStructure key={index} data={block.data} />;
+                case 'referenceList':
+                    return (
+                        <div className="my-16 pt-8 border-t border-slate-200 dark:border-slate-700">
+                            <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Rujukan Akademik</h4>
+                            <ul className="space-y-2 text-[10px] text-slate-500 dark:text-slate-400 font-mono">
+                                {block.items.map((item, i) => <li key={i}>{item}</li>)}
+                            </ul>
+                        </div>
+                    );
+                default: return null;
+            }
+        })();
+        return <AnimatedContentBlock key={index}>{content}</AnimatedContentBlock>;
+    };
+
+    return (
+        <div className="container mx-auto px-0 sm:px-4 py-0 sm:py-10 max-w-2xl min-h-screen">
+            <button onClick={onClose} className="fixed top-6 left-6 z-30 w-10 h-10 bg-white/90 dark:bg-slate-800 rounded-full shadow-lg backdrop-blur-sm flex items-center justify-center text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors border border-slate-200 dark:border-slate-700"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg></button>
+            <div className="bg-[#fdfbf7] dark:bg-slate-950 p-6 sm:p-12 sm:rounded-[2rem] shadow-2xl shadow-black/20 dark:shadow-none min-h-screen border-x border-slate-200 dark:border-none">
+                <div className="text-center mb-12 mt-8 sm:mt-0">
+                   <span className="inline-block text-[10px] font-extrabold tracking-[0.2em] uppercase text-emerald-600/60 mb-3">Bab {chapter.id}</span>
+                   <h1 className="text-2xl sm:text-4xl md:text-5xl font-serif font-bold text-emerald-950 dark:text-white mb-4 leading-tight break-words hyphens-auto">{chapter.title}</h1>
+                   <p className="text-xs text-slate-500 dark:text-slate-400 font-serif italic max-w-lg mx-auto leading-relaxed border-t border-b border-slate-100 dark:border-slate-800 py-4">{chapter.summary}</p>
+                </div>
+                <article className="prose prose-slate dark:prose-invert max-w-none">
+                    {chapter.content.map(renderContentBlock)}
+                </article>
+                <div className="mt-16 pt-10 border-t border-slate-100 dark:border-slate-800 flex justify-center pb-20">
+                    { (chapter.id >= 6) ? (
+                        <button onClick={onClose} className="bg-emerald-800 text-white font-bold py-4 px-12 rounded-full text-sm transition-transform hover:scale-105 shadow-xl shadow-emerald-200 dark:shadow-none">Selesai</button>
+                    ) : (
+                        <button onClick={() => onGoToNext(chapter.id)} disabled={!isQuizDone} className="group bg-emerald-800 hover:bg-emerald-700 text-white font-bold py-4 px-12 rounded-full text-sm transition-all shadow-xl shadow-emerald-200 dark:shadow-none disabled:bg-slate-100 disabled:text-slate-400 disabled:shadow-none flex items-center gap-3">
+                            <span>{isQuizDone ? 'Lanjutkan' : 'Selesaikan Kuis'}</span>
+                            {isQuizDone && <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>}
+                        </button>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const ProfileModal = ({ isOpen, onClose }) => {
+    const { gameState, currentUser } = useAppContext();
+    const modalRef = useRef(null);
+    const [infoPopup, setInfoPopup] = useState(null); 
+    const xpRef = useRef(null);
+    const levelRef = useRef(null);
+    
+    useEffect(() => { if (!isOpen) { setInfoPopup(null); } }, [isOpen]);
+    const handleInfoClick = (type, ref) => {
+        if (infoPopup && infoPopup.type === type) { setInfoPopup(null); return; }
+        const rect = ref.current.getBoundingClientRect();
+        setInfoPopup({ type, top: rect.bottom + 10, left: rect.left + rect.width / 2 });
+    };
+    
+    if(!gameState || !currentUser || !isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-slate-900/30 backdrop-blur-[2px] z-50 flex items-center justify-center p-4" onClick={onClose}>
+             <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl p-1 w-72 animate-popIn border border-slate-100 dark:border-slate-700" onClick={e => e.stopPropagation()}>
+                <div className="p-6 text-center">
+                    <div className="w-16 h-16 bg-slate-50 dark:bg-slate-700 rounded-full mx-auto mb-4 flex items-center justify-center text-2xl font-bold text-emerald-800 dark:text-white">{currentUser.fullName.charAt(0)}</div>
+                    <h3 className="font-bold text-emerald-900 dark:text-white truncate">{currentUser.fullName}</h3>
+                    <p className="text-xs text-slate-400 mt-1 uppercase tracking-wider font-bold">{LEVELS[Math.min(gameState.level - 1, LEVELS.length - 1)]}</p>
+                    <div className="flex gap-2 mt-6">
+                        <button ref={levelRef} onClick={() => handleInfoClick('level', levelRef)} className="flex-1 py-3 rounded-xl bg-slate-50 dark:bg-slate-900/50 hover:bg-emerald-50 transition-colors group"><span className="block text-xl font-extrabold text-emerald-900 dark:text-white group-hover:text-emerald-600">{gameState.level}</span><span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Lvl</span></button>
+                        <button ref={xpRef} onClick={() => handleInfoClick('xp', xpRef)} className="flex-1 py-3 rounded-xl bg-slate-50 dark:bg-slate-900/50 hover:bg-yellow-50 transition-colors group"><span className="block text-xl font-extrabold text-emerald-900 dark:text-white group-hover:text-yellow-600">{gameState.xp}</span><span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">XP</span></button>
+                    </div>
+                </div>
+            </div>
+            {infoPopup && ReactDOM.createPortal( <div className="glass-panel fixed z-[60] p-4 rounded-xl shadow-xl w-56 text-xs transform -translate-x-1/2" style={{ top: infoPopup.top, left: infoPopup.left }}> {infoPopup.type === 'level' ? (<div><h5 className="font-bold mb-2 uppercase tracking-wider text-emerald-600 text-[10px]">Peringkat</h5><ul className="space-y-1 text-slate-600 dark:text-slate-300 max-h-32 overflow-y-auto">{LEVELS.map((l, i) => <li key={l} className={i + 1 === gameState.level ? 'font-bold text-emerald-600' : ''}>{i+1}. {l}</li>)}</ul></div>) : (<div><h5 className="font-bold mb-2 uppercase tracking-wider text-yellow-600 text-[10px]">Nilai</h5><div className="space-y-1 text-slate-500"><div>A+ (90-100)</div><div>A (80-89)</div><div>B (70-79)</div></div></div>)} </div>, document.body )}
+        </div>
+    );
+};
+
+const LogoutConfirmModal = ({ isOpen, onClose, onConfirm }) => {
+    if (!isOpen) return null;
+    return (
+        <div className="fixed inset-0 bg-slate-900/30 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-white dark:bg-slate-800 rounded-[2rem] shadow-2xl p-8 max-w-xs w-full text-center animate-popIn" onClick={e => e.stopPropagation()}>
+                <h2 className="font-bold text-emerald-900 dark:text-white mb-2">Keluar?</h2>
+                <p className="text-xs text-slate-500 mb-6 leading-relaxed">Sesi Anda akan diakhiri. Progres tersimpan otomatis.</p>
+                <div className="flex gap-3">
+                    <button onClick={onClose} className="flex-1 py-3 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-600 text-xs font-bold transition-colors">Batal</button>
+                    <button onClick={onConfirm} className="flex-1 py-3 rounded-xl bg-red-500 hover:bg-red-600 text-white text-xs font-bold transition-colors shadow-lg shadow-red-200 dark:shadow-none">Ya</button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const Dashboard = () => {
+    const { gameState, logout } = useAppContext();
+    const [selectedChapter, setSelectedChapter] = useState(null);
+    const [isChatbotOpen, setIsChatbotOpen] = useState(false);
+    const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+    const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
+    const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
+    const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
+    const [isDarkMode, setIsDarkMode] = useState(() => localStorage.getItem('darkMode') === 'true');
+    const [gridVisible, setGridVisible] = useState(false);
+    const actionMenuTriggerRef = useRef(null);
+
+    useEffect(() => { document.documentElement.classList.toggle('dark', isDarkMode); localStorage.setItem('darkMode', isDarkMode); }, [isDarkMode]);
+    useEffect(() => { if(!selectedChapter) { const timer = setTimeout(() => setGridVisible(true), 100); return () => clearTimeout(timer); } }, [selectedChapter]);
+    const toggleDarkMode = () => setIsDarkMode(prev => !prev);
+    const handleChapterClick = (chapter) => { localStorage.setItem('dashboardScrollPosition', window.scrollY.toString()); setSelectedChapter(chapter); };
+    const handleCloseChapter = () => { setSelectedChapter(null); setTimeout(() => { const saved = localStorage.getItem('dashboardScrollPosition'); if(saved) window.scrollTo(0, parseInt(saved, 10)); }, 50); };
+    const handleGoToNextChapter = (currentChapterId) => { const next = CHAPTERS.find(c => c.id === currentChapterId + 1); if (next && gameState.xp >= next.requiredXp && (next.id < 2 || gameState.quizStats[`quiz-bab-${next.id - 1}`]?.completed)) setSelectedChapter(next); else setSelectedChapter(null); };
+    
+    const ChapterGrid = () => (
+      <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 stagger-in ${gridVisible ? 'is-visible' : ''}`}>
+        {CHAPTERS.map((chapter, index) => {
+            const isLocked = !(gameState.xp >= chapter.requiredXp && (chapter.id < 2 || gameState.quizStats[`quiz-bab-${chapter.id - 1}`]?.completed));
+            const progress = gameState.completedChapters.includes(chapter.id) ? 100 : 0;
+            return <ChapterCard key={chapter.id} chapter={chapter} onClick={() => handleChapterClick(chapter)} isLocked={isLocked} progress={progress} style={{ transitionDelay: `${index * 80}ms` }} />;
+        })}
+      </div>
+    );
+
+    return (
+        // Adjusted gradient to be deeper and extend further down (90%)
+        <div className="min-h-screen font-sans bg-[linear-gradient(to_bottom,#022c22_0%,#064e3b_60%,#065f46_90%,#ecfdf5_100%)] dark:bg-[#020617] dark:bg-none text-slate-800 dark:text-slate-200">
+            <ProfileModal isOpen={isProfileModalOpen} onClose={() => setIsProfileModalOpen(false)} />
+            <InfoModal isOpen={isInfoModalOpen} onClose={() => setIsInfoModalOpen(false)} />
+            <LogoutConfirmModal isOpen={isLogoutConfirmOpen} onClose={() => setIsLogoutConfirmOpen(false)} onConfirm={() => { logout(); setIsLogoutConfirmOpen(false); }} />
+            <LeaderboardModal isOpen={isLeaderboardOpen} onClose={() => setIsLeaderboardOpen(false)} />
+            {selectedChapter ? <ChapterView key={selectedChapter.id} chapter={selectedChapter} onClose={handleCloseChapter} onGoToNext={handleGoToNextChapter} /> : (
+            <>
+            <main className="container mx-auto px-6 py-12 max-w-6xl pb-32">
+               <div className="mt-8 mb-16 animate-on-scroll is-visible text-center">
+                   <p className="text-xs font-bold text-emerald-200/80 dark:text-emerald-400 uppercase tracking-[0.3em] mb-4">Modul Pembelajaran</p>
+                   <h2 className="text-4xl font-serif font-bold text-white dark:text-white drop-shadow-sm tracking-tight">Islamisasi Sumatra</h2>
+               </div>
+               <ChapterGrid />
+            </main>
+            <footer className="py-8 text-center mt-12">
+                <p className="text-[10px] text-emerald-200/50 font-bold uppercase tracking-widest">Kelompok 1 • Pendidikan Sejarah UNJ</p>
+            </footer>
+            </>
+            )}
+            <ActionMenu 
+                isDarkMode={isDarkMode} 
+                toggleDarkMode={toggleDarkMode} 
+                onChatbotToggle={() => setIsChatbotOpen(true)}
+                onInfo={() => setIsInfoModalOpen(true)}
+                onLeaderboard={() => setIsLeaderboardOpen(true)}
+                onProfile={() => setIsProfileModalOpen(true)}
+                onLogout={() => setIsLogoutConfirmOpen(true)}
+                triggerRef={actionMenuTriggerRef} 
+            />
+            <FluidPopup isOpen={isChatbotOpen} onClose={() => setIsChatbotOpen(false)} triggerRef={actionMenuTriggerRef}><Chatbot currentChapterId={selectedChapter?.id} onClose={() => setIsChatbotOpen(false)} /></FluidPopup>
+        </div>
+    );
+};
+
+const App = () => {
+  const { isLoading, currentUser } = useAppContext();
+  if (isLoading) return <div className="min-h-screen flex items-center justify-center bg-[#022c22] dark:bg-[#020617]"><div className="loader"></div></div>;
+  return currentUser ? <Dashboard /> : <AuthScreen />;
+};
+
+const Root = () => (
+  <AppProvider><AudioProvider fileSrc="musik-modul.mp3"><App /></AudioProvider></AppProvider>
+);
+
+const container = document.getElementById('root');
+const root = ReactDOM.createRoot(container);
+root.render(<Root />);
+
+    </script>
+<script type="module" src="/index.tsx"></script>
+</body>
+</html>
